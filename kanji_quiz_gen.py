@@ -18,7 +18,7 @@ MINCHO  = 'HeiseiMin-W3'
 PAGE_W, PAGE_H = A4   # 595 × 842
 ML = 28               # left margin
 MR = 28               # right margin
-MT = 28               # top margin
+MT = 30               # top margin
 COL_GAP = 11          # gap between columns
 COL_W = (PAGE_W - ML - MR - COL_GAP) / 2   # ≈ 264 pt per column
 
@@ -163,12 +163,12 @@ def draw_header(c, y):
 def _draw_section(c, y, title, questions, num_offset, row_h, draw_row_fn):
     """Draw a section with title, separator, and question rows."""
     # Section title
-    c.setFont(GOTHIC, 11)
+    c.setFont(GOTHIC, 12)
     c.drawString(ML, y, title)
-    y -= 16   # title text height + breathing room
+    y -= 17   # title text height + breathing room
 
     draw_divider(c, y, 0.5)
-    y -= 6    # breathing room before first question
+    y -= 7    # breathing room before first question
 
     for i in range(10):
         row_y = y - i * row_h
@@ -179,11 +179,6 @@ def _draw_section(c, y, title, questions, num_offset, row_h, draw_row_fn):
             num = q_idx + num_offset
             draw_row_fn(c, questions[q_idx], num, col_x(col), row_y)
 
-        # Thin guide line in the gap between this row and the next
-        if i < 9:
-            c.setStrokeColorRGB(0.82, 0.82, 0.82)
-            c.line(ML, row_y - 5, PAGE_W - MR, row_y - 5)
-            c.setStrokeColorRGB(0, 0, 0)
 
     # Vertical column divider
     mid_x = col_x(0) + COL_W + COL_GAP / 2
@@ -253,10 +248,9 @@ def generate_pdf(output_path=None):
     cv.setLineWidth(0.5)
 
     y = PAGE_H - MT
-    y = draw_header(cv, y)
-    y = _draw_section(cv, y, '【一】読み仮名を見て漢字を書きなさい', a_qs, 1,  22, _row_a)
-    y = _draw_section(cv, y, '【二】漢字の読み仮名をひらがなで書きなさい', b_qs, 21, 20, _row_b)
-    y = _draw_section(cv, y, '【三】対義語を書きなさい', c_qs, 41, 20, _row_c)
+    y = _draw_section(cv, y, '【一】読み仮名を見て漢字を書きなさい', a_qs, 1,  24, _row_a)
+    y = _draw_section(cv, y, '【二】漢字の読み仮名をひらがなで書きなさい', b_qs, 21, 22, _row_b)
+    y = _draw_section(cv, y, '【三】対義語を書きなさい', c_qs, 41, 22, _row_c)
 
     cv.showPage()
     cv.save()
