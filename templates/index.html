@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>漢字テストジェネレーター</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      max-width: 440px;
+      width: 100%;
+      padding: 36px 28px 32px;
+      text-align: center;
+    }
+
+    .icon { font-size: 48px; margin-bottom: 12px; }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    .info-box {
+      background: #f7f8fc;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 28px;
+      text-align: left;
+    }
+
+    .info-box ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .info-box li {
+      font-size: 13px;
+      color: #444;
+      padding: 5px 0;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-box li:last-child { border-bottom: none; }
+
+    .badge {
+      background: #4f46e5;
+      color: #fff;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      white-space: nowrap;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      letter-spacing: 0.04em;
+    }
+
+    .btn:hover { background: #4338ca; }
+    .btn:active { transform: scale(0.98); }
+
+    .btn:disabled {
+      background: #a5b4fc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .note {
+      margin-top: 16px;
+      font-size: 11px;
+      color: #999;
+      line-height: 1.6;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 3px solid rgba(255,255,255,0.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="icon">📝</div>
+    <h1>漢字テストジェネレーター</h1>
+    <p class="subtitle">対義語 224組から毎回ランダムに60問を出題</p>
+
+    <div class="info-box">
+      <ul>
+        <li>
+          <span class="badge">一</span>
+          読み仮名を見て漢字を書く（升目あり）20問
+        </li>
+        <li>
+          <span class="badge">二</span>
+          漢字の読み仮名をひらがなで書く 20問
+        </li>
+        <li>
+          <span class="badge">三</span>
+          対義語を書く 20問
+        </li>
+      </ul>
+    </div>
+
+    <form id="genForm" action="/generate" method="post">
+      <button type="submit" class="btn" id="genBtn">
+        テストを作成する
+      </button>
+    </form>
+
+    <p class="note">
+      PDFがダウンロードされます。A4用紙に印刷してご使用ください。<br>
+      ※ サーバーが起動中でない場合、最初のアクセスに少し時間がかかることがあります。
+    </p>
+  </div>
+
+  <script>
+    const form = document.getElementById('genForm');
+    const btn  = document.getElementById('genBtn');
+
+    form.addEventListener('submit', () => {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>生成中…';
+      // Re-enable after 8 seconds (PDF should be downloaded by then)
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.textContent = 'テストを作成する';
+      }, 8000);
+    });
+  </script>
+</body>
+</html>
