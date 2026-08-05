@@ -1,7 +1,19 @@
 # -*- coding: utf-8 -*-
-import base64, json, os, io
+"""社会テスト（歴史：古代）の完成版HTMLを生成する。
 
-FIG='figs'
+  python3 tools/build_shakai.py
+
+tools/shakai_template.html（骨組み）に問題データと tools/figs/*.jpg を
+埋め込んで templates/shakai.html を出力する。
+templates/shakai.html が実際に使うファイルで、単体で開けるスタンドアロン版。
+このディレクトリのファイルは素材なので直接ブラウザで開いても動かない。
+"""
+import base64, json, os
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+ROOT = os.path.dirname(HERE)
+FIG  = os.path.join(HERE, 'figs')
+
 def b64(name):
     with open(f'{FIG}/{name}.jpg','rb') as f:
         return 'data:image/jpeg;base64,'+base64.b64encode(f.read()).decode()
@@ -272,7 +284,10 @@ Q = [
 
 assert len(Q)==60, len(Q)
 
-TPL = open('shakai_tpl.html', encoding='utf-8').read()
+TPL = open(os.path.join(HERE, 'shakai_template.html'), encoding='utf-8').read()
+assert '/*__QDATA__*/' in TPL, 'テンプレートにプレースホルダが見つからない'
 out = TPL.replace('/*__QDATA__*/', 'const Q='+json.dumps(Q, ensure_ascii=False)+';\nconst FIGS='+json.dumps(FIGDATA, ensure_ascii=False)+';')
-open('/Users/yizhenchen/Desktop/test_random/templates/shakai.html','w',encoding='utf-8').write(out)
-print('written', len(out)//1024, 'KB')
+
+dest = os.path.join(ROOT, 'templates', 'shakai.html')
+open(dest, 'w', encoding='utf-8').write(out)
+print(f'生成: {dest}  ({len(out)//1024} KB, {len(Q)}問, 図{len(FIGDATA)}点)')
