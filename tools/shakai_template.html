@@ -3,25 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>社会テスト（古代）</title>
+<title>社会テスト（歴史）</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Hiragino Mincho ProN','Yu Mincho','MS Mincho',serif;background:#f0f2f5;color:#111}
 
 /* ── 操作画面 ── */
-.ctrl{max-width:460px;margin:0 auto;padding:28px 20px;text-align:center}
-.app-title{font-size:21px;font-weight:bold;color:#2d3748;margin-bottom:4px}
-.app-sub{font-size:13px;color:#718096;margin-bottom:22px}
-.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.09);margin-bottom:16px}
+.ctrl{max-width:640px;margin:0 auto;padding:24px 18px}
+.app-title{font-size:21px;font-weight:bold;color:#2d3748;text-align:center;margin-bottom:3px}
+.app-sub{font-size:13px;color:#718096;text-align:center;margin-bottom:20px}
+.card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.09);margin-bottom:14px}
+.card-h{font-size:13px;font-weight:bold;color:#4a5568;margin-bottom:10px}
+
+/* 範囲ボタン（理科テストと同じ ftag スタイル） */
+.frow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.frow:last-child{margin-bottom:0}
+.flabel{font-size:12px;color:#8a94a6;min-width:34px}
+.ftag{padding:4px 11px;border:1px solid #ccc;border-radius:8px;font-size:12px;cursor:pointer;
+      background:#fff;color:#666;font-family:inherit}
+.ftag.on{background:#e7ecff;color:#2c3f8f;font-weight:500;border-color:#8b9ae0}
+.ftag.era{font-weight:500}
+.ftag.all{border-color:#999}
+.ftag.all.on{background:#333;color:#fff;border-color:#333}
+
 .row{display:flex;align-items:center;gap:12px}
 label{font-size:14px;color:#4a5568;white-space:nowrap;min-width:66px;text-align:left}
-input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:17px;font-family:inherit}
-.chk{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:#4a5568;justify-content:flex-start}
+input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;
+                   font-size:17px;font-family:inherit}
+.chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:14px;color:#4a5568}
 .chk input{width:18px;height:18px}
-.btn{width:100%;padding:16px;background:#5a67d8;color:#fff;border:none;border-radius:12px;font-size:18px;font-family:inherit;cursor:pointer}
+.pool{font-size:12px;color:#718096;margin-top:10px}
+.pool b{color:#2c3f8f;font-size:14px}
+.btn{width:100%;padding:16px;background:#5a67d8;color:#fff;border:none;border-radius:12px;
+     font-size:18px;font-family:inherit;cursor:pointer}
 .btn:active{background:#4c51bf}
-.badge{display:inline-block;background:#ebf4ff;color:#3182ce;border-radius:8px;padding:4px 10px;font-size:12px;margin:3px}
-.info{font-size:12px;color:#a0aec0;margin-top:14px;line-height:1.6}
+.btn:disabled{background:#b6bce8;cursor:not-allowed}
+.info{font-size:12px;color:#a0aec0;margin-top:12px;line-height:1.6;text-align:center}
 
 /* ── テストシート ── */
 #sheet{display:none;background:#fff;padding:14px 16px 20px}
@@ -33,25 +50,24 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
 .qcols{column-count:2;column-gap:9mm;column-rule:1px solid #ddd}
 @media (max-width:640px){.qcols{column-count:1}}
 
-.q{break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid;
-   display:inline-block;width:100%;
-   padding:6px 0 8px;border-bottom:1px dotted #c8c8c8;margin-bottom:2px}
+.q,.qgroup{break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid;
+   display:inline-block;width:100%}
+.q{padding:6px 0 8px;border-bottom:1px dotted #c8c8c8;margin-bottom:2px}
+/* 位置参照のある問題どうしは1つの塊にして列またぎを防ぐ（「上の地図」が成立する） */
+.qgroup>.q:not(:last-child){border-bottom:1px dotted #e8e8e8}
+
 .q-body{font-size:9.4px;line-height:1.62;text-align:justify}
 .q-num{font-weight:bold;font-size:9.6px;margin-right:.4em}
 
-/* 本文内の囲み・選択肢 */
 .box{border:1px dotted #999;padding:4px 6px;margin:4px 0;line-height:1.62}
-.opts{margin-top:3px}
 .note{font-size:8.4px;color:#666;margin-top:2px}
 
 /* 図まわり ── 文字と重ならないよう余白を確保 */
 .fig{margin:8px 0 7px;text-align:center;clear:both}
 .fig img{max-width:100%;height:auto;display:inline-block}
-/* 右寄せ図：本文が回り込む。左に余白を取って文字が接しないようにする */
 .fig-r{float:right;margin:2px 0 8px 11px;text-align:center;max-width:40%}
 .fig-r img{max-width:100%;height:auto;display:block}
 
-/* 解答欄 */
 .ans{margin-top:8px;padding-top:2px;display:flex;flex-wrap:wrap;gap:5px 12px;clear:both}
 .ai{font-size:9px;display:flex;align-items:flex-end;gap:3px;white-space:nowrap}
 .al{display:inline-block;min-width:86px;border-bottom:1px solid #333;height:13px;
@@ -59,8 +75,10 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
 .al.show{color:#c00}
 
 .sheet-btns{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
-.pbtn{padding:10px 22px;background:#48bb78;color:#fff;border:none;border-radius:8px;font-size:16px;font-family:inherit;cursor:pointer}
-.bbtn{padding:10px 22px;background:#718096;color:#fff;border:none;border-radius:8px;font-size:16px;font-family:inherit;cursor:pointer}
+.pbtn{padding:10px 22px;background:#48bb78;color:#fff;border:none;border-radius:8px;
+      font-size:16px;font-family:inherit;cursor:pointer}
+.bbtn{padding:10px 22px;background:#718096;color:#fff;border:none;border-radius:8px;
+      font-size:16px;font-family:inherit;cursor:pointer}
 
 @media print{
   .ctrl,.sheet-btns{display:none!important}
@@ -76,31 +94,32 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
 
 <div class="ctrl" id="ctrl">
   <div class="app-title">社会テストジェネレーター</div>
-  <div class="app-sub">歴史：古代（旧石器〜平安時代）　全60問</div>
+  <div class="app-sub">歴史編　古代〜近世　全<span id="totalQ"></span>問</div>
+
   <div class="card">
-    <div>
-      <span class="badge">原文そのまま</span>
-      <span class="badge">図・写真つき</span>
-      <span class="badge">ランダム出題</span>
+    <div class="card-h">出題範囲</div>
+    <div id="tags"></div>
+    <div class="pool">選択中：<b id="poolN">0</b> 問</div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <label>問題数</label>
+      <input type="number" id="cnt" value="15" min="1" max="177">
     </div>
-    <div style="margin-top:16px">
-      <div class="row">
-        <label>問題数</label>
-        <input type="number" id="cnt" value="15" min="3" max="60">
-      </div>
-      <div class="chk">
-        <input type="checkbox" id="withans">
-        <label for="withans" style="min-width:auto;cursor:pointer">解答を表示する</label>
-      </div>
+    <div class="chk">
+      <input type="checkbox" id="withans">
+      <label for="withans" style="min-width:auto;cursor:pointer">解答を表示する</label>
     </div>
   </div>
-  <button class="btn" onclick="generate()">テストを作成する</button>
+
+  <button class="btn" id="genBtn" onclick="generate()">テストを作成する</button>
   <div class="info">※ 毎回ランダムに出題されます<br>※ 図のある問題は原本の図・写真つきで出ます</div>
 </div>
 
 <div id="sheet">
   <div class="sh-head">
-    <span class="sh-title">社会テスト　歴史：古代（旧石器〜平安時代）</span>
+    <span class="sh-title" id="shTitle">社会テスト　歴史</span>
     <span class="sh-meta">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿　点＿＿＿</span>
   </div>
   <div class="qcols" id="qc"></div>
@@ -113,70 +132,166 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
 <script>
 /*__QDATA__*/
 
-const CIRC='①②③④⑤';
+const CIRC='①②③④⑤⑥';
+const sel=new Set();   // 選択中の範囲キー
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function inRange(q,r){return q.n>=r[0]&&q.n<=r[1];}
 
+/* ── 範囲ボタンの構築 ── */
+function buildTags(){
+  const host=document.getElementById('tags');
+  document.getElementById('totalQ').textContent=Q.length;
+
+  const all=document.createElement('div'); all.className='frow';
+  all.innerHTML='<span class="flabel"></span>';
+  const ab=document.createElement('button');
+  ab.className='ftag all'; ab.textContent='全範囲'; ab.dataset.k='all';
+  ab.onclick=()=>{sel.clear(); sel.add('all'); render();};
+  all.appendChild(ab); host.appendChild(all);
+
+  RANGES.forEach(era=>{
+    const row=document.createElement('div'); row.className='frow';
+    const lb=document.createElement('span'); lb.className='flabel'; lb.textContent=era.label;
+    row.appendChild(lb);
+
+    const eb=document.createElement('button');
+    eb.className='ftag era'; eb.textContent=era.name; eb.dataset.k=era.key;
+    eb.onclick=()=>toggle(era.key); row.appendChild(eb);
+
+    era.subs.forEach(s=>{
+      const b=document.createElement('button');
+      b.className='ftag'; b.textContent=s.name; b.dataset.k=s.key;
+      b.onclick=()=>toggle(s.key); row.appendChild(b);
+    });
+    host.appendChild(row);
+  });
+  sel.add('all'); render();
+}
+
+function toggle(k){
+  sel.delete('all');
+  if(sel.has(k)) sel.delete(k); else sel.add(k);
+  if(sel.size===0) sel.add('all');
+  render();
+}
+
+/* 選択中のキーから出題対象の問題を求める */
+function pool(){
+  if(sel.has('all')) return Q.slice();
+  const rs=[];
+  RANGES.forEach(era=>{
+    if(sel.has(era.key)) rs.push(era.range);
+    era.subs.forEach(s=>{ if(sel.has(s.key)) rs.push(s.range); });
+  });
+  return Q.filter(q=>rs.some(r=>inRange(q,r)));
+}
+
+function render(){
+  document.querySelectorAll('.ftag').forEach(b=>{
+    b.classList.toggle('on', sel.has(b.dataset.k));
+  });
+  const n=pool().length;
+  document.getElementById('poolN').textContent=n;
+  const cnt=document.getElementById('cnt');
+  cnt.max=n;
+  if(+cnt.value>n) cnt.value=n;
+  document.getElementById('genBtn').disabled = n<1;
+}
+
+/* 選択範囲から見出しを作る */
+function titleOf(){
+  if(sel.has('all')) return '社会テスト　歴史（古代〜近世）';
+  const names=[];
+  RANGES.forEach(era=>{
+    if(sel.has(era.key)){ names.push(era.label); return; }
+    era.subs.forEach(s=>{ if(sel.has(s.key)) names.push(s.name); });
+  });
+  return '社会テスト　歴史　'+names.join('・');
+}
+
+/* ── テスト生成 ── */
 function generate(){
-  const cnt=Math.min(Q.length,Math.max(3,parseInt(document.getElementById('cnt').value)||15));
+  const P=pool();
+  if(!P.length) return;
+  const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||15));
   const showAns=document.getElementById('withans').checked;
 
-  let sel=shuffle(Q.slice()).slice(0,cnt);
-  const nums=new Set(sel.map(q=>q.n));
+  let list=shuffle(P.slice()).slice(0,cnt);
+  const nums=new Set(list.map(q=>q.n));
 
-  // 他の問題を参照する問題の処理
-  // 参照先が出題されている → 原文のまま。参照先が直前に来るよう並べ替える
-  // 参照先が出題されていない → 改変文（talt）と代替の図（figalt）を使う
-  sel=sel.map(q=>{
+  // 他問を参照する問題：参照先が出題されていれば原文のまま、
+  // 出題されていなければ改変文（talt）と代替の図（figalt）に差し替える
+  list=list.map(q=>{
     if(!q.dep) return q;
-    if(nums.has(q.dep)) return Object.assign({},q,{_keepAfter:q.dep});
-    return Object.assign({},q,{t:q.talt||q.t, fig:q.figalt||q.fig});
+    if(nums.has(q.dep)) return Object.assign({},q,{_pairWith:q.dep});
+    return Object.assign({},q,{
+      t:q.talt||q.t,
+      fig:q.figalt||q.fig,
+      figpos:q.figalt?(q.figposalt||null):q.figpos});
   });
 
-  sel.forEach(q=>{
-    if(!q._keepAfter) return;
-    const from=sel.indexOf(q);
-    sel.splice(from,1);
-    const to=sel.findIndex(x=>x.n===q._keepAfter);
-    sel.splice(to+1,0,q);
-  });
+  // 「上の地図」など位置に依存する参照は、参照先と1つの塊にまとめて列またぎを防ぐ
+  // groups: 参照先の番号 -> 依存side の問題
+  const groups=new Map();
+  list.forEach(q=>{ if(q._pairWith && q.group) groups.set(q._pairWith,q); });
+  // 依存sideは必ずペアの中で描画するので、単独では出さない（listの順序に依存しない）
+  const inGroup=new Set([...groups.values()].map(q=>q.n));
 
   const c=document.getElementById('qc');
   c.innerHTML='';
-  sel.forEach(q=>{
-    const labs=q.lab||q.a.map((_,i)=>CIRC[i]);
-    const ans=q.a.map((v,i)=>
-      `<span class="ai">${labs[i]}<span class="al${showAns?' show':''}">${showAns?v:''}</span></span>`
-    ).join('');
 
-    let figR='', figB='';
-    if(q.fig&&FIGS[q.fig]){
-      const f=FIGS[q.fig];
-      if(q.figpos==='right'){
-        figR=`<span class="fig-r"><img src="${f.src}" style="max-height:${f.mh}mm"></span>`;
-      }else{
-        figB=`<div class="fig"><img src="${f.src}" style="max-height:${f.mh}mm"></div>`;
-      }
+  list.forEach(q=>{
+    if(inGroup.has(q.n)) return;
+    const partner=groups.get(q.n);
+    if(partner){
+      const g=document.createElement('div'); g.className='qgroup';
+      g.appendChild(qEl(q,showAns));       // 参照先（地図を持つ側）を上に
+      g.appendChild(qEl(partner,showAns)); // 「上の地図」と書かれた側を下に
+      c.appendChild(g);
+    }else{
+      c.appendChild(qEl(q,showAns));
     }
-    const note=q.note?`<div class="note">${q.note}</div>`:'';
-
-    const d=document.createElement('div');
-    d.className='q';
-    d.innerHTML=`<div class="q-body">${figR}<span class="q-num">${q.n}</span>${q.t}</div>`
-              + figB + note
-              + `<div class="ans">${ans}</div>`;
-    c.appendChild(d);
   });
 
+  document.getElementById('shTitle').textContent=titleOf();
   document.getElementById('ctrl').style.display='none';
   document.getElementById('sheet').style.display='block';
   window.scrollTo(0,0);
+}
+
+function qEl(q,showAns){
+  const labs=q.lab||q.a.map((_,i)=>CIRC[i]);
+  const ans=q.a.map((v,i)=>
+    `<span class="ai">${labs[i]}<span class="al${showAns?' show':''}">${showAns?v:''}</span></span>`
+  ).join('');
+
+  let figR='', figB='', figT='';
+  if(q.fig&&FIGS[q.fig]){
+    const f=FIGS[q.fig];
+    const img=`<img src="${f.src}" style="max-height:${f.mh}mm">`;
+    if(q.figpos==='right')   figR=`<span class="fig-r">${img}</span>`;
+    else if(q.figtop)        figT=`<div class="fig">${img}</div>`;
+    else                     figB=`<div class="fig">${img}</div>`;
+  }
+  const note=q.note?`<div class="note">${q.note}</div>`:'';
+  const tail=q.t2?`<div class="q-body" style="margin-top:4px">${q.t2}</div>`:'';
+
+  const d=document.createElement('div');
+  d.className='q';
+  d.innerHTML=figT
+            + `<div class="q-body">${figR}<span class="q-num">${q.n}</span>${q.t}</div>`
+            + figB + tail + note
+            + `<div class="ans">${ans}</div>`;
+  return d;
 }
 
 function back(){
   document.getElementById('ctrl').style.display='block';
   document.getElementById('sheet').style.display='none';
 }
+
+buildTags();
 </script>
 </body>
 </html>
