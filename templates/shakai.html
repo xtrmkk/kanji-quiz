@@ -84,6 +84,10 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
       font-size:16px;font-family:inherit;cursor:pointer}
 .bbtn{padding:10px 22px;background:#718096;color:#fff;border:none;border-radius:8px;
       font-size:16px;font-family:inherit;cursor:pointer}
+.abtn{padding:10px 22px;background:#dd6b20;color:#fff;border:none;border-radius:8px;
+      font-size:16px;font-family:inherit;cursor:pointer}
+.abtn.on{background:#9c4221}
+.ordnote{font-size:11px;color:#a0aec0}
 
 @media print{
   .ctrl,.sheet-btns{display:none!important}
@@ -112,9 +116,14 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
       <label>問題数</label>
       <input type="number" id="cnt" value="15" min="1" max="300">
     </div>
+    <div class="frow" style="margin-top:13px">
+      <span class="flabel">順番</span>
+      <button class="ftag on" id="ordBtn" onclick="toggleOrder()">ランダム</button>
+      <span class="ordnote" id="ordNote">出題順をシャッフルします</span>
+    </div>
     <div class="chk">
       <input type="checkbox" id="withans">
-      <label for="withans" style="min-width:auto;cursor:pointer">解答を表示する</label>
+      <label for="withans" style="min-width:auto;cursor:pointer">解答を表示した状態で作成する</label>
     </div>
   </div>
 
@@ -131,6 +140,7 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
   <div class="sheet-btns">
     <button class="pbtn" onclick="window.print()">印刷する</button>
     <button class="bbtn" onclick="back()">戻る</button>
+    <button class="abtn" id="ansBtn" onclick="toggleAns()">解答を表示</button>
   </div>
 </div>
 
@@ -140,7 +150,9 @@ const FIGS={"q310": {"src": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/
 const RANGES=[{"key": "kodai", "label": "古代", "name": "古代すべて", "range": [310, 369], "subs": [{"key": "k1", "name": "旧石器〜古墳", "range": [310, 319]}, {"key": "k2", "name": "飛鳥・奈良", "range": [320, 346]}, {"key": "k3", "name": "平安", "range": [347, 369]}]}, {"key": "chusei", "label": "中世", "name": "中世すべて", "range": [370, 419], "subs": [{"key": "c1", "name": "鎌倉", "range": [370, 388]}, {"key": "c2", "name": "室町・戦国", "range": [389, 419]}]}, {"key": "kinsei", "label": "近世", "name": "近世すべて", "range": [420, 486], "subs": [{"key": "s1", "name": "安土桃山", "range": [420, 433]}, {"key": "s2", "name": "江戸前期", "range": [434, 457]}, {"key": "s3", "name": "江戸後期・幕末", "range": [458, 486]}]}, {"key": "kindai", "label": "近代", "name": "近代すべて", "range": [487, 546], "subs": [{"key": "m1", "name": "明治前期", "range": [487, 512]}, {"key": "m2", "name": "明治後期", "range": [513, 526]}, {"key": "m3", "name": "大正", "range": [527, 536]}, {"key": "m4", "name": "昭和・戦前", "range": [537, 546]}]}, {"key": "gendai", "label": "現代", "name": "現代すべて", "range": [547, 566], "subs": [{"key": "g1", "name": "戦後改革・占領", "range": [547, 556]}, {"key": "g2", "name": "高度成長〜現代", "range": [557, 566]}]}, {"key": "shiryo", "label": "史料", "name": "重要史料すべて", "range": [567, 580], "subs": [{"key": "r1", "name": "古代〜中世", "range": [567, 572]}, {"key": "r2", "name": "近世", "range": [573, 575]}, {"key": "r3", "name": "近代〜現代", "range": [576, 580]}]}];
 
 const CIRC='①②③④⑤⑥';
-const sel=new Set();   // 選択中の範囲キー
+const sel=new Set();     // 選択中の範囲キー
+let shuffleOn=true;      // 出題順をシャッフルするか
+let ansShown=false;      // 解答を表示中か
 
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function inRange(q,r){return q.n>=r[0]&&q.n<=r[1];}
@@ -238,18 +250,24 @@ function generate(){
       figpos:q.figalt?(q.figposalt||null):q.figpos});
   });
 
+  // 番号順に並べる指定なら、抽選後に番号順へ並べ替える
+  if(!shuffleOn) list.sort((a,b)=> a.n-b.n || (a.sub||'').localeCompare(b.sub||''));
+
   // 「上の地図」など位置に依存する参照は、参照先と1つの塊にまとめて列またぎを防ぐ
   // groups: 参照先の番号 -> 依存side の問題
   const groups=new Map();
   list.forEach(q=>{ if(q._pairWith && q.group) groups.set(q._pairWith,q); });
   // 依存sideは必ずペアの中で描画するので、単独では出さない（listの順序に依存しない）
-  const inGroup=new Set([...groups.values()].map(q=>q.n));
+  const inGroup=new Set([...groups.values()]);
+
+  // 番号参照（「434の人物」など）は、参照先の直後に続けて並べる
+  list=orderAfterDep(list, inGroup);
 
   const c=document.getElementById('qc');
   c.innerHTML='';
 
   list.forEach(q=>{
-    if(inGroup.has(q.n)) return;
+    if(inGroup.has(q)) return;
     const partner=groups.get(q.n);
     if(partner){
       const g=document.createElement('div'); g.className='qgroup';
@@ -262,15 +280,49 @@ function generate(){
   });
 
   document.getElementById('shTitle').textContent=titleOf();
+  setAns(showAns);                       // 解答ボタンの表示を作成時の状態に合わせる
   document.getElementById('ctrl').style.display='none';
   document.getElementById('sheet').style.display='block';
   window.scrollTo(0,0);
 }
 
+/* 参照先が出題されている問題を、参照先の直後に並べ替える。
+   同じ問題を参照する問題が複数あるときは番号順に続けて並べる。
+   位置参照（inGroup）はペアとして別途まとめて描画するのでここでは動かさない。 */
+function orderAfterDep(list, inGroup){
+  const byDep=new Map();          // 参照先の番号 -> [依存する問題...]
+  list.forEach(q=>{
+    if(!q._pairWith || inGroup.has(q)) return;
+    if(!byDep.has(q._pairWith)) byDep.set(q._pairWith,[]);
+    byDep.get(q._pairWith).push(q);
+  });
+  if(!byDep.size) return list;
+
+  byDep.forEach(arr=>arr.sort((a,b)=> a.n-b.n || (a.sub||'').localeCompare(b.sub||'')));
+  const isChild=new Set();
+  byDep.forEach(arr=>arr.forEach(q=>isChild.add(q)));
+
+  const out=[], done=new Set();
+  const emit=q=>{
+    if(done.has(q)) return;
+    done.add(q); out.push(q);
+    (byDep.get(q.n)||[]).forEach(emit);   // 参照先の直後に依存問題を続ける
+  };
+  list.forEach(q=>{ if(!isChild.has(q)) emit(q); });
+  list.forEach(emit);                     // 取りこぼし（循環参照）への保険
+  return out;
+}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function qEl(q,showAns){
   const labs=q.lab||q.a.map((_,i)=>CIRC[i]);
   const ans=q.a.map((v,i)=>
-    `<span class="ai">${labs[i]}<span class="al${showAns?' show':''}">${showAns?v:''}</span></span>`
+    `<span class="ai">${labs[i]}<span class="al${showAns?' show':''}" data-a="${esc(v)}">`
+    + `${showAns?v:''}</span></span>`
   ).join('');
 
   let figR='', figB='', figT='';
@@ -299,6 +351,32 @@ function qEl(q,showAns){
 function back(){
   document.getElementById('ctrl').style.display='block';
   document.getElementById('sheet').style.display='none';
+}
+
+/* 出題順：ランダム ⇄ 番号順 */
+function toggleOrder(){
+  shuffleOn=!shuffleOn;
+  const b=document.getElementById('ordBtn');
+  b.textContent = shuffleOn?'ランダム':'番号順';
+  b.classList.toggle('on', shuffleOn);
+  document.getElementById('ordNote').textContent =
+    shuffleOn?'出題順をシャッフルします':'小さい番号から順に並べます';
+}
+
+/* 解答の表示 ⇄ 非表示（作り直さずその場で切り替える） */
+function toggleAns(){
+  setAns(!ansShown);
+}
+
+function setAns(on){
+  ansShown=on;
+  document.querySelectorAll('#qc .al').forEach(e=>{
+    e.textContent = on ? (e.dataset.a||'') : '';
+    e.classList.toggle('show', on);
+  });
+  const b=document.getElementById('ansBtn');
+  b.textContent = on?'解答を隠す':'解答を表示';
+  b.classList.toggle('on', on);
 }
 
 buildTags();
