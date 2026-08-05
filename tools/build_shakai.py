@@ -12,6 +12,9 @@ templates/shakai.html が実際に使うファイルで、単体で開けるス�
   tools/data_kodai.py   第8節  古代（旧石器〜平安時代）  310-369
   tools/data_chusei.py  第9節  中世（鎌倉〜室町時代）    370-419
   tools/data_kinsei.py  第10節 近世（安土桃山〜江戸時代）420-486
+  tools/data_kindai.py  第11節 近代（明治〜昭和・戦前）  487-546
+  tools/data_gendai.py  第12節 現代（昭和・戦後〜現代）  547-566
+  tools/data_shiryo.py  第13節 歴史重要史料のまとめ      567-580
 """
 import base64, json, os, sys
 
@@ -20,9 +23,10 @@ ROOT = os.path.dirname(HERE)
 FIG  = os.path.join(HERE, 'figs')
 sys.path.insert(0, HERE)
 
-import data_kodai, data_chusei, data_kinsei
+import data_kodai, data_chusei, data_kinsei, data_kindai, data_gendai, data_shiryo
 
-Q = data_kodai.Q + data_chusei.Q + data_kinsei.Q
+Q = (data_kodai.Q + data_chusei.Q + data_kinsei.Q
+     + data_kindai.Q + data_gendai.Q + data_shiryo.Q)
 
 # ── 出題範囲（画面上のボタン） ─────────────────────────────────────────
 RANGES = [
@@ -40,6 +44,21 @@ RANGES = [
       {'key':'s2','name':'江戸前期',      'range':[434,457]},
       {'key':'s3','name':'江戸後期・幕末','range':[458,486]},
   ]},
+  {'key':'kindai', 'label':'近代', 'name':'近代すべて', 'range':[487,546], 'subs':[
+      {'key':'m1','name':'明治前期',      'range':[487,512]},
+      {'key':'m2','name':'明治後期',      'range':[513,526]},
+      {'key':'m3','name':'大正',          'range':[527,536]},
+      {'key':'m4','name':'昭和・戦前',    'range':[537,546]},
+  ]},
+  {'key':'gendai', 'label':'現代', 'name':'現代すべて', 'range':[547,566], 'subs':[
+      {'key':'g1','name':'戦後改革・占領','range':[547,556]},
+      {'key':'g2','name':'高度成長〜現代','range':[557,566]},
+  ]},
+  {'key':'shiryo', 'label':'史料', 'name':'重要史料すべて', 'range':[567,580], 'subs':[
+      {'key':'r1','name':'古代〜中世',    'range':[567,572]},
+      {'key':'r2','name':'近世',          'range':[573,575]},
+      {'key':'r3','name':'近代〜現代',    'range':[576,580]},
+  ]},
 ]
 
 # ── 図（切り出し画像と表示最大高さmm） ────────────────────────────────
@@ -53,6 +72,8 @@ FIGS = {
   # 近世
   'q420':24,'q421':24,'q424':24,'q430':28,'q433':22,'q434':22,'q445':26,
   'q447':28,'q452':28,'q456':22,'q465':26,'q476':22,'q477':22,
+  # 近代
+  'q488':30,'q504':24,'q505':24,'q508':22,'q509':24,'q515':38,'q524':24,'q530':20,
 }
 
 
@@ -64,7 +85,10 @@ def b64(name):
 def check():
     """データの整合性を確認する。"""
     nums = [q['n'] for q in Q]
-    assert len(nums) == len(set(nums)), '問題番号が重複している'
+    # 史料は1つの番号に複数の史料があるため n+sub で一意になる
+    keys = [(q['n'], q.get('sub', '')) for q in Q]
+    dup = [k for k in keys if keys.count(k) > 1]
+    assert not dup, f'問題番号が重複している: {sorted(set(dup))}'
 
     # 範囲がすべての問題を覆っているか
     covered = set()

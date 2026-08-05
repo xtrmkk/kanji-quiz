@@ -61,6 +61,11 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
 
 .box{border:1px dotted #999;padding:4px 6px;margin:4px 0;line-height:1.62}
 .note{font-size:8.4px;color:#666;margin-top:2px}
+/* 史料の引用ブロック */
+.shiryo{border:1px solid #444;padding:5px 7px;margin:3px 0 5px;line-height:1.7;
+        background:#fbfbfb;text-indent:1em}
+.shiryo b{font-weight:bold}
+.era{font-size:8.6px;color:#555;margin-left:.4em}
 
 /* 図まわり ── 文字と重ならないよう余白を確保 */
 .fig{margin:8px 0 7px;text-align:center;clear:both}
@@ -94,7 +99,7 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
 
 <div class="ctrl" id="ctrl">
   <div class="app-title">社会テストジェネレーター</div>
-  <div class="app-sub">歴史編　古代〜近世　全<span id="totalQ"></span>問</div>
+  <div class="app-sub">歴史編　古代〜現代・重要史料　全<span id="totalQ"></span>問</div>
 
   <div class="card">
     <div class="card-h">出題範囲</div>
@@ -105,7 +110,7 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
   <div class="card">
     <div class="row">
       <label>問題数</label>
-      <input type="number" id="cnt" value="15" min="1" max="177">
+      <input type="number" id="cnt" value="15" min="1" max="300">
     </div>
     <div class="chk">
       <input type="checkbox" id="withans">
@@ -201,7 +206,7 @@ function render(){
 
 /* 選択範囲から見出しを作る */
 function titleOf(){
-  if(sel.has('all')) return '社会テスト　歴史（古代〜近世）';
+  if(sel.has('all')) return '社会テスト　歴史（古代〜現代）';
   const names=[];
   RANGES.forEach(era=>{
     if(sel.has(era.key)){ names.push(era.label); return; }
@@ -277,10 +282,13 @@ function qEl(q,showAns){
   const note=q.note?`<div class="note">${q.note}</div>`:'';
   const tail=q.t2?`<div class="q-body" style="margin-top:4px">${q.t2}</div>`:'';
 
+  const num=q.n+(q.sub||'');
+  const era=q.era?`<span class="era">［${q.era}］</span>`:'';
+
   const d=document.createElement('div');
   d.className='q';
   d.innerHTML=figT
-            + `<div class="q-body">${figR}<span class="q-num">${q.n}</span>${q.t}</div>`
+            + `<div class="q-body">${figR}<span class="q-num">${num}</span>${era}${q.t}</div>`
             + figB + tail + note
             + `<div class="ans">${ans}</div>`;
   return d;
