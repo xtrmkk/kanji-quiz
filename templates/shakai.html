@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>社会テスト（古代）</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Mincho Pro','Yu Mincho',serif;background:#f0f2f5}
+
+/* ── 操作画面 ── */
+.ctrl{max-width:480px;margin:0 auto;padding:28px 20px;text-align:center}
+.app-title{font-size:22px;font-weight:bold;color:#2d3748;margin-bottom:4px}
+.app-sub{font-size:13px;color:#718096;margin-bottom:24px}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.1);margin-bottom:16px}
+.row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.row:last-child{margin-bottom:0}
+label{font-size:14px;color:#4a5568;white-space:nowrap;min-width:60px;text-align:left}
+input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:17px;font-family:inherit}
+.btn{width:100%;padding:16px;background:#5a67d8;color:#fff;border:none;border-radius:12px;font-size:18px;font-family:inherit;cursor:pointer;transition:background .2s;margin-top:4px}
+.btn:active{background:#4c51bf}
+.badge{display:inline-block;background:#ebf4ff;color:#3182ce;border-radius:8px;padding:4px 10px;font-size:12px;margin:4px}
+.info{font-size:12px;color:#a0aec0;margin-top:14px}
+
+/* ── テストシート ── */
+#sheet{display:none;padding:12px;background:#fff;min-height:100vh}
+.sh-head{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #222;padding-bottom:5px;margin-bottom:10px}
+.sh-title{font-size:15px;font-weight:bold}
+.sh-meta{font-size:11px}
+.q-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 14px}
+.q-box{padding:5px 2px;border-bottom:1px dotted #bbb}
+.q-text{font-size:9.5px;line-height:1.45;color:#111}
+.q-num{font-weight:bold;font-size:9.5px}
+.q-ans{margin-top:3px;display:flex;flex-wrap:wrap;gap:2px 10px}
+.ans-item{font-size:9px;display:flex;align-items:baseline;gap:2px;white-space:nowrap}
+.ans-line{display:inline-block;width:72px;border-bottom:1px solid #333;height:12px}
+.sheet-btns{margin-top:14px;display:flex;gap:10px}
+.pbtn{padding:10px 22px;background:#48bb78;color:#fff;border:none;border-radius:8px;font-size:16px;font-family:inherit;cursor:pointer}
+.bbtn{padding:10px 22px;background:#718096;color:#fff;border:none;border-radius:8px;font-size:16px;font-family:inherit;cursor:pointer}
+
+@media print{
+  .ctrl,.sheet-btns{display:none!important}
+  #sheet{display:block!important;padding:0;background:#fff}
+  body{background:#fff}
+  @page{size:A4;margin:12mm 10mm}
+  .q-grid{font-size:9pt}
+  .q-box{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="ctrl" id="ctrl">
+  <div class="app-title">社会テストジェネレーター</div>
+  <div class="app-sub">歴史：古代（旧石器〜平安時代）全60問</div>
+  <div class="card">
+    <div>
+      <span class="badge">穴埋め問題</span>
+      <span class="badge">60問バンク</span>
+      <span class="badge">ランダム出題</span>
+    </div>
+    <div style="margin-top:14px">
+      <div class="row">
+        <label>問題数</label>
+        <input type="number" id="cnt" value="20" min="5" max="60">
+      </div>
+    </div>
+  </div>
+  <button class="btn" onclick="generate()">テストを作成する</button>
+  <div class="info">※ 毎回ランダムに出題されます</div>
+</div>
+
+<div id="sheet">
+  <div class="sh-head">
+    <span class="sh-title">社会テスト（歴史：古代）</span>
+    <span class="sh-meta">名前：＿＿＿＿＿＿　組：＿＿　番：＿＿　点：＿＿＿</span>
+  </div>
+  <div class="q-grid" id="qc"></div>
+  <div class="sheet-btns">
+    <button class="pbtn" onclick="window.print()">印刷する</button>
+    <button class="bbtn" onclick="back()">戻る</button>
+  </div>
+</div>
+
+<script>
+const Q=[
+{n:310,t:"旧石器時代の遺跡で、打製石器が発見された（①）が群馬県で発見され、日本に旧石器時代の人々が住んでいたことが証明されました。",a:["岩宿遺跡"]},
+{n:311,t:"縄文時代：石を磨いてつくった（①）・縄目模様がついた（②）・地面を掘り下げた（③）・土でつくった人形（④）。",a:["磨製石器","縄文土器","竪穴住居","土偶"]},
+{n:312,t:"食べ物の残りかすを捨てた場所を（①）といいます。東京都の（②）が1877年に発掘されました。青森県の（③）は縄文時代の大規模な集落跡です。",a:["貝塚","大森貝塚","三内丸山遺跡"]},
+{n:313,t:"弥生時代、大陸から（①）が伝わりました。稲を刈る（②）が使われ、収穫した米を蓄える（③）がつくられました。",a:["稲作","石包丁","高床倉庫"]},
+{n:314,t:"弥生時代に使われた（①）は縄文土器より薄くてかたい特徴があります。また、祭りの道具として（②）が使われました。",a:["弥生土器","銅鐸"]},
+{n:315,t:"弥生時代の遺跡として、静岡県の（①）遺跡や佐賀県の（②）遺跡が有名です。",a:["登呂","吉野ヶ里"]},
+{n:316,t:"1784年、福岡県の（①）で「漢委奴国王」と刻まれた（②）が発見されました。これは中国の皇帝から日本の王に贈られたものです。",a:["志賀島","金印"]},
+{n:317,t:"3世紀ごろ、日本にあった（①）という国を、（②）という女王が治めていました。（②）は中国の魏に使いを送り、「親魏倭王」の称号を授けられました。",a:["邪馬台国","卑弥呼"]},
+{n:318,t:"古墳時代の代表的な墓を（①）といいます。大阪府の（②）は世界最大級です。埼玉県の（③）から銘文の刻まれた鉄剣が出土しました。古墳のまわりに並べた素焼きを（④）といいます。",a:["前方後円墳","大仙古墳","稲荷山古墳","埴輪"]},
+{n:319,t:"5世紀ごろ朝鮮半島から移り住んだ（①）が（②）・（③）・（④）・（⑤）などを日本に伝えました。",a:["渡来人","儒教","仏教","漢字","須恵器"]},
+{n:320,t:"4世紀中ごろ大和地方の豪族が連合してつくった（①）が東北地方南部まで支配しました。氏や姓などで豪族を支配したこの制度を（②）といいます。",a:["大和政権","氏姓制度"]},
+{n:321,t:"593年に（①）天皇の摂政となった（②）は、（③）の協力を得て、（④）を中心とする国づくりをめざし政治を進めました。",a:["推古","聖徳太子（厩戸皇子）","蘇我馬子","天皇"]},
+{n:322,t:"聖徳太子は603年に能力重視の（①）を定め、604年に役人の心構えを示す（②）を定めました。",a:["冠位十二階","十七条の憲法"]},
+{n:323,t:"聖徳太子は607年に（①）を（②）として中国に送り、進んだ文化の取り入れをはかりました。",a:["小野妹子","遣隋使"]},
+{n:324,t:"聖徳太子が斑鳩（奈良県）につくった（①）は現存する世界最古の木造建築物です。この時代の文化を（②）といいます。",a:["法隆寺","飛鳥文化"]},
+{n:325,t:"645年、のちに天智天皇となる（①）は（②）と協力して蘇我氏を倒し、（③）を行いました。",a:["中大兄皇子","中臣鎌足","大化の改新"]},
+{n:326,t:"大化の改新では土地と人々を国のものとする（①）を原則とし、（②）を定めて人々に（③）を貸しあたえる代わりに税を負担させました。",a:["公地公民","班田収授法","口分田"]},
+{n:327,t:"大化の改新では全国を国・郡・里に分け、中央の貴族を（　）に任命して国を治めさせ、地方の豪族を郡司に任命しました。",a:["国司"]},
+{n:328,t:"5世紀ごろ朝鮮半島にあった3つの国：北（①）・東（②）・南西（③）を答えなさい。",a:["高句麗","新羅","百済"]},
+{n:329,t:"663年、（①）で唐・新羅の連合軍に敗れました。その後、皇子は北九州に（②）を置き、近江大津に都を移し（③）天皇として即位しました。",a:["白村江の戦い","大宰府","天智"]},
+{n:330,t:"天智天皇の死後672年に（①）が起き、勝利した大海人皇子は（②）天皇として即位しました。その妻はのちの（③）天皇で、694年に藤原京へ都を移しました。",a:["壬申の乱","天武","持統"]},
+{n:331,t:"7世紀末、日本最古の貨幣といわれる（①）がつくられました。708年、武蔵国の銅を使って（②）がつくられました。",a:["富本銭","和同開珎"]},
+{n:332,t:"701年、（①）と刑部親王が中心となり、唐の律令にならって（②）を制定しました。",a:["藤原不比等","大宝律令"]},
+{n:333,t:"律令制の税：収穫した稲の3％を納める（①）・都で10日間働く代わりに布を納める（②）・地方の特産物を納める（③）。",a:["租","庸","調"]},
+{n:334,t:"北九州を守る兵士を（①）といいます。国司の命令で1年に60日以内働くことを（②）といいます。",a:["防人","雑徭"]},
+{n:335,t:"630年から始まった（①）として中国に渡った（②）は、中国の皇帝に仕え高い位についたが帰国できずに亡くなりました。",a:["遣唐使","阿倍仲麻呂"]},
+{n:336,t:"（①）天皇は、710年に都を（②）に移しました。",a:["元明","平城京"]},
+{n:337,t:"現在の（①）市に設けられた平城京は、唐の都（②）を手本としてつくられました。",a:["奈良","長安"]},
+{n:338,t:"奈良時代のころに使われていた、文字が書かれた木の札を何といいますか。",a:["木簡"]},
+{n:339,t:"723年に（①）が出され田畑の開墾が促進されました。743年に（②）が出され開墾した土地の私有が認められ、このような私有地を（③）といいます。",a:["三世一身の法","墾田永年私財法","荘園"]},
+{n:340,t:"（①）天皇は741年、全国に（②）・（③）をつくる命令を出し、総本山として都に（④）を置きました。",a:["聖武","国分寺","国分尼寺","東大寺"]},
+{n:341,t:"悲田院や施薬院をつくり、貧しい人々を救ったといわれる聖武天皇の皇后はだれですか。",a:["光明皇后（光明子）"]},
+{n:342,t:"奈良時代に民衆に仏教を広め、橋をつくるなどの社会事業にも従事した僧はだれですか。",a:["行基"]},
+{n:343,t:"①奈良時代、苦難の末に唐から来日した高僧はだれですか。②①の人物が奈良につくった寺院を答えなさい。",a:["鑑真","唐招提寺"]},
+{n:344,t:"唐の影響を受けた奈良時代の仏教文化を（①）文化といいます。聖武天皇の遺品が納められた（②）は、三角形の材木をくみ上げる（③）造が特徴です。",a:["天平","正倉院","校倉"]},
+{n:345,t:"712年に太安万侶が（①）を、720年に舎人親王が（②）をつくりました。各地の地理や特産物を記した（③）もつくられました。",a:["古事記","日本書紀","風土記"]},
+{n:346,t:"奈良時代の日本最古の歌集（①）がつくられました。（①）には山上憶良の『（②）』が収められています。",a:["万葉集","貧窮問答歌"]},
+{n:347,t:"（①）天皇は律令政治を立て直すため、794年に都を（②）に移しました。",a:["桓武","平安京"]},
+{n:348,t:"平安時代の初め、（①）に任じられた（②）が東北地方の蝦夷と戦いました。",a:["征夷大将軍","坂上田村麻呂"]},
+{n:349,t:"805年に唐から帰国した（①）は（②）を開き、平安京の北東の（③）を総本山としました。",a:["最澄","天台宗","比叡山延暦寺"]},
+{n:350,t:"806年に唐から帰国した（①）は（②）を開き、紀伊国（和歌山県）の（③）を総本山としました。",a:["空海","真言宗","高野山金剛峯寺"]},
+{n:351,t:"①幼い天皇・女性の天皇に代わって政治をとり行う地位を何といいますか。②成人した男性の天皇に代わって政治を進める地位を何といいますか。",a:["摂政","関白"]},
+{n:352,t:"藤原氏が一族で高位高官を独占した政治を（①）政治といいます。866年、（②）が皇族以外で初めて摂政につきました。",a:["摂関","藤原良房"]},
+{n:353,t:"（①）は唐の衰えを理由に天皇に（②）の中止を進言し、894年に（②）は中止されました。",a:["菅原道真","遣唐使"]},
+{n:354,t:"935年、（①）は自ら「新皇」と名乗り朝廷に大規模な反乱を起こしました。この（①）の乱といいます。",a:["平将門"]},
+{n:355,t:"939年、（①）は大宰府を攻撃し都へ向けて軍を進めました。この（①）の乱といいます。",a:["藤原純友"]},
+{n:356,t:"①11世紀初めに摂政・太政大臣となり「この世をば 我が世とぞ思ふ…」という歌をよんだ人物は誰ですか。②①の息子で藤原氏の全盛期を受け継いだ人物は誰ですか。",a:["藤原道長","藤原頼通"]},
+{n:357,t:"平安時代中ごろ、有力な貴族は荘園を広げ特別な権利を持ちました。①税を納めなくてよい権利（①）②荘園への役人の立ち入りを断る権利（②）",a:["不輸の権","不入の権"]},
+{n:358,t:"平安時代に育った日本独自の貴族文化を（①）文化といいます。貴族は（②）造の屋敷に住み、女性たちは（③）という衣装をまといました。",a:["国風","寝殿","十二単"]},
+{n:359,t:"藤原氏の娘に仕えた（①）は、平安時代の貴族社会の様子を『（②）』という物語に著しました。",a:["紫式部","源氏物語"]},
+{n:360,t:"藤原氏の娘に仕えた（①）は、貴族たちの日々の生活を『（②）』という随筆に著しました。",a:["清少納言","枕草子"]},
+{n:361,t:"①平安時代に発達した大和絵と物語を組み合わせた巻物を何といいますか。②「かぐや姫」を題材にした平安時代の物語を何といいますか。③天皇の命令で紀貫之らが編んだ歌集を何といいますか。",a:["絵巻物","竹取物語","古今和歌集"]},
+{n:362,t:"①浄土教を信仰した藤原頼通がつくった建物を何といいますか。②この建物は現在の何市にありますか。",a:["平等院鳳凰堂","宇治市"]},
+{n:363,t:"（①）は1086年に天皇の位を幼い息子にゆずり、上皇として政治を行いました。これを（②）といいます。これにより摂関政治は次第に衰えました。",a:["白河上皇","院政"]},
+{n:364,t:"東北地方では1051年から（①）合戦、1083年から（②）合戦が起こりました。これらの合戦で東日本では（③）氏が力を強めました。",a:["前九年","後三年","源"]},
+{n:365,t:"東北地方で勢力を強めた（①）氏は現在の岩手県の（②）を本拠地として栄えました。（②）につくられた（③）は内外ともに金箔がはられています。",a:["奥州藤原","平泉","中尊寺金色堂"]},
+{n:366,t:"①天皇と上皇の対立から1156年に起こった戦乱は何ですか。②源氏と平氏の対立から1159年に起こった戦乱は何ですか。③①②に勝利し1167年に武士初の太政大臣になった人物は誰ですか。",a:["保元の乱","平治の乱","平清盛"]},
+{n:367,t:"平清盛が信仰したことでも知られ、世界文化遺産に登録されている建物を何といいますか。",a:["厳島神社"]},
+{n:368,t:"平清盛は現在の神戸港にあたる（①）を整備し、中国との（②）をさかんに行いました。中国からは（③）という貨幣が大量に輸入されました。",a:["大輪田泊","日宋貿易","宋銭"]},
+{n:369,t:"1185年、平氏が滅亡した戦いを何といいますか。",a:["壇ノ浦の戦い"]},
+];
+
+const CIRCLES='①②③④⑤';
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function generate(){
+  const cnt=Math.min(60,Math.max(5,parseInt(document.getElementById('cnt').value)||20));
+  const sel=shuffle([...Q]).slice(0,cnt);
+  const c=document.getElementById('qc');
+  c.innerHTML='';
+  sel.forEach(q=>{
+    const div=document.createElement('div');
+    div.className='q-box';
+    const ansHtml=q.a.map((v,i)=>
+      `<span class="ans-item">${CIRCLES[i]}<span class="ans-line"></span></span>`
+    ).join('');
+    div.innerHTML=`<div class="q-text"><span class="q-num">Q${q.n}　</span>${q.t}</div><div class="q-ans">${ansHtml}</div>`;
+    c.appendChild(div);
+  });
+  document.getElementById('ctrl').style.display='none';
+  document.getElementById('sheet').style.display='block';
+}
+
+function back(){
+  document.getElementById('ctrl').style.display='block';
+  document.getElementById('sheet').style.display='none';
+}
+</script>
+</body>
+</html>

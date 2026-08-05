@@ -11,6 +11,11 @@ def index():
     return render_template('index.html')
 
 
+@app.route('/shakai')
+def shakai():
+    return render_template('shakai.html')
+
+
 @app.route('/generate', methods=['POST'])
 def generate():
     pdf_bytes = generate_pdf()
