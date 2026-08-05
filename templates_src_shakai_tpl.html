@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>社会テスト（古代）</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Mincho ProN','Yu Mincho','MS Mincho',serif;background:#f0f2f5;color:#111}
+
+/* ── 操作画面 ── */
+.ctrl{max-width:460px;margin:0 auto;padding:28px 20px;text-align:center}
+.app-title{font-size:21px;font-weight:bold;color:#2d3748;margin-bottom:4px}
+.app-sub{font-size:13px;color:#718096;margin-bottom:22px}
+.card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.09);margin-bottom:16px}
+.row{display:flex;align-items:center;gap:12px}
+label{font-size:14px;color:#4a5568;white-space:nowrap;min-width:66px;text-align:left}
+input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;font-size:17px;font-family:inherit}
+.chk{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:#4a5568;justify-content:flex-start}
+.chk input{width:18px;height:18px}
+.btn{width:100%;padding:16px;background:#5a67d8;color:#fff;border:none;border-radius:12px;font-size:18px;font-family:inherit;cursor:pointer}
+.btn:active{background:#4c51bf}
+.badge{display:inline-block;background:#ebf4ff;color:#3182ce;border-radius:8px;padding:4px 10px;font-size:12px;margin:3px}
+.info{font-size:12px;color:#a0aec0;margin-top:14px;line-height:1.6}
+
+/* ── テストシート ── */
+#sheet{display:none;background:#fff;padding:14px 16px 20px}
+.sh-head{display:flex;justify-content:space-between;align-items:flex-end;
+         border-bottom:2px solid #111;padding-bottom:5px;margin-bottom:9px}
+.sh-title{font-size:15px;font-weight:bold}
+.sh-meta{font-size:10.5px;letter-spacing:.02em}
+
+.qcols{column-count:2;column-gap:9mm;column-rule:1px solid #ddd}
+@media (max-width:640px){.qcols{column-count:1}}
+
+.q{break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid;
+   display:inline-block;width:100%;
+   padding:6px 0 8px;border-bottom:1px dotted #c8c8c8;margin-bottom:2px}
+.q-body{font-size:9.4px;line-height:1.62;text-align:justify}
+.q-num{font-weight:bold;font-size:9.6px;margin-right:.4em}
+
+/* 本文内の囲み・選択肢 */
+.box{border:1px dotted #999;padding:4px 6px;margin:4px 0;line-height:1.62}
+.opts{margin-top:3px}
+.note{font-size:8.4px;color:#666;margin-top:2px}
+
+/* 図まわり ── 文字と重ならないよう余白を確保 */
+.fig{margin:8px 0 7px;text-align:center;clear:both}
+.fig img{max-width:100%;height:auto;display:inline-block}
+/* 右寄せ図：本文が回り込む。左に余白を取って文字が接しないようにする */
+.fig-r{float:right;margin:2px 0 8px 11px;text-align:center;max-width:40%}
+.fig-r img{max-width:100%;height:auto;display:block}
+
+/* 解答欄 */
+.ans{margin-top:8px;padding-top:2px;display:flex;flex-wrap:wrap;gap:5px 12px;clear:both}
+.ai{font-size:9px;display:flex;align-items:flex-end;gap:3px;white-space:nowrap}
+.al{display:inline-block;min-width:86px;border-bottom:1px solid #333;height:13px;
+    text-align:center;font-size:9px;line-height:13px}
+.al.show{color:#c00}
+
+.sheet-btns{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+.pbtn{padding:10px 22px;background:#48bb78;color:#fff;border:none;border-radius:8px;font-size:16px;font-family:inherit;cursor:pointer}
+.bbtn{padding:10px 22px;background:#718096;color:#fff;border:none;border-radius:8px;font-size:16px;font-family:inherit;cursor:pointer}
+
+@media print{
+  .ctrl,.sheet-btns{display:none!important}
+  #sheet{display:block!important;padding:0}
+  body{background:#fff}
+  @page{size:A4;margin:11mm 9mm}
+  .qcols{column-count:2}
+  .al.show{color:#000}
+}
+</style>
+</head>
+<body>
+
+<div class="ctrl" id="ctrl">
+  <div class="app-title">社会テストジェネレーター</div>
+  <div class="app-sub">歴史：古代（旧石器〜平安時代）　全60問</div>
+  <div class="card">
+    <div>
+      <span class="badge">原文そのまま</span>
+      <span class="badge">図・写真つき</span>
+      <span class="badge">ランダム出題</span>
+    </div>
+    <div style="margin-top:16px">
+      <div class="row">
+        <label>問題数</label>
+        <input type="number" id="cnt" value="15" min="3" max="60">
+      </div>
+      <div class="chk">
+        <input type="checkbox" id="withans">
+        <label for="withans" style="min-width:auto;cursor:pointer">解答を表示する</label>
+      </div>
+    </div>
+  </div>
+  <button class="btn" onclick="generate()">テストを作成する</button>
+  <div class="info">※ 毎回ランダムに出題されます<br>※ 図のある問題は原本の図・写真つきで出ます</div>
+</div>
+
+<div id="sheet">
+  <div class="sh-head">
+    <span class="sh-title">社会テスト　歴史：古代（旧石器〜平安時代）</span>
+    <span class="sh-meta">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿　点＿＿＿</span>
+  </div>
+  <div class="qcols" id="qc"></div>
+  <div class="sheet-btns">
+    <button class="pbtn" onclick="window.print()">印刷する</button>
+    <button class="bbtn" onclick="back()">戻る</button>
+  </div>
+</div>
+
+<script>
+/*__QDATA__*/
+
+const CIRC='①②③④⑤';
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function generate(){
+  const cnt=Math.min(Q.length,Math.max(3,parseInt(document.getElementById('cnt').value)||15));
+  const showAns=document.getElementById('withans').checked;
+
+  let sel=shuffle(Q.slice()).slice(0,cnt);
+  const nums=new Set(sel.map(q=>q.n));
+
+  // 他の問題を参照する問題の処理
+  // 参照先が出題されている → 原文のまま。参照先が直前に来るよう並べ替える
+  // 参照先が出題されていない → 改変文（talt）と代替の図（figalt）を使う
+  sel=sel.map(q=>{
+    if(!q.dep) return q;
+    if(nums.has(q.dep)) return Object.assign({},q,{_keepAfter:q.dep});
+    return Object.assign({},q,{t:q.talt||q.t, fig:q.figalt||q.fig});
+  });
+
+  sel.forEach(q=>{
+    if(!q._keepAfter) return;
+    const from=sel.indexOf(q);
+    sel.splice(from,1);
+    const to=sel.findIndex(x=>x.n===q._keepAfter);
+    sel.splice(to+1,0,q);
+  });
+
+  const c=document.getElementById('qc');
+  c.innerHTML='';
+  sel.forEach(q=>{
+    const labs=q.lab||q.a.map((_,i)=>CIRC[i]);
+    const ans=q.a.map((v,i)=>
+      `<span class="ai">${labs[i]}<span class="al${showAns?' show':''}">${showAns?v:''}</span></span>`
+    ).join('');
+
+    let figR='', figB='';
+    if(q.fig&&FIGS[q.fig]){
+      const f=FIGS[q.fig];
+      if(q.figpos==='right'){
+        figR=`<span class="fig-r"><img src="${f.src}" style="max-height:${f.mh}mm"></span>`;
+      }else{
+        figB=`<div class="fig"><img src="${f.src}" style="max-height:${f.mh}mm"></div>`;
+      }
+    }
+    const note=q.note?`<div class="note">${q.note}</div>`:'';
+
+    const d=document.createElement('div');
+    d.className='q';
+    d.innerHTML=`<div class="q-body">${figR}<span class="q-num">${q.n}</span>${q.t}</div>`
+              + figB + note
+              + `<div class="ans">${ans}</div>`;
+    c.appendChild(d);
+  });
+
+  document.getElementById('ctrl').style.display='none';
+  document.getElementById('sheet').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function back(){
+  document.getElementById('ctrl').style.display='block';
+  document.getElementById('sheet').style.display='none';
+}
+</script>
+</body>
+</html>
