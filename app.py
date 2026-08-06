@@ -16,6 +16,11 @@ def shakai():
     return render_template('shakai.html')
 
 
+@app.route('/rika')
+def rika():
+    return render_template('rika.html')
+
+
 @app.route('/generate', methods=['POST'])
 def generate():
     pdf_bytes = generate_pdf()

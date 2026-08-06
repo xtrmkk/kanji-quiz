@@ -3,5 +3,12 @@ __pycache__/
 *.pdf
 quiz_final.html
 *.json
+!tools/*.json
 *.zip
 .claude/
+.DS_Store
+CLAUDE_backup_*.md
+quiz_rika.html
+rika_src.html
+rika_gen.py
+static/

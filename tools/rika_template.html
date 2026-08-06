@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>理科テストジェネレーター</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Mincho ProN','Yu Mincho','MS Mincho',serif;background:#f0f2f5;color:#111}
+
+/* ── 操作画面 ── */
+.ctrl{max-width:700px;margin:0 auto;padding:24px 18px}
+.app-title{font-size:21px;font-weight:bold;color:#2d3748;text-align:center;margin-bottom:3px}
+.app-sub{font-size:13px;color:#718096;text-align:center;margin-bottom:20px}
+.card{background:#fff;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(0,0,0,.09);margin-bottom:14px}
+.card-h{font-size:13px;font-weight:bold;color:#4a5568;margin-bottom:10px}
+
+.frow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.frow:last-child{margin-bottom:0}
+.flabel{font-size:12px;color:#8a94a6;min-width:44px}
+.ftag{padding:4px 11px;border:1px solid #ccc;border-radius:8px;font-size:12px;cursor:pointer;
+      background:#fff;color:#666;font-family:inherit}
+.ftag.on{background:#e7ecff;color:#2c3f8f;font-weight:500;border-color:#8b9ae0}
+.ftag.era{font-weight:500}
+.ftag.all{border-color:#999}
+.ftag.all.on{background:#333;color:#fff;border-color:#333}
+
+.row{display:flex;align-items:center;gap:12px}
+label{font-size:14px;color:#4a5568;white-space:nowrap;min-width:66px;text-align:left}
+input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:8px;
+                   font-size:17px;font-family:inherit}
+.pool{font-size:12px;color:#718096;margin-top:10px}
+.pool b{color:#2c3f8f;font-size:14px}
+.btn{width:100%;padding:16px;background:#2f855a;color:#fff;border:none;border-radius:12px;
+     font-size:18px;font-family:inherit;cursor:pointer}
+.btn:active{background:#276749}
+.btn:disabled{background:#a8c9b6;cursor:not-allowed}
+.info{font-size:12px;color:#a0aec0;margin-top:12px;line-height:1.6;text-align:center}
+.ordnote{font-size:11px;color:#a0aec0}
+
+/* ── テストシート ── */
+#sheet{display:none;background:#fff;padding:14px 16px 20px}
+.sh-head{display:flex;justify-content:space-between;align-items:flex-end;
+         border-bottom:2px solid #111;padding-bottom:5px;margin-bottom:9px}
+.sh-title{font-size:15px;font-weight:bold}
+.sh-meta{font-size:10.5px;letter-spacing:.02em}
+
+.qcols{column-count:2;column-gap:9mm;column-rule:1px solid #ddd}
+@media (max-width:640px){.qcols{column-count:1}}
+
+.q{break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid;
+   display:inline-block;width:100%;
+   padding:6px 0 8px;border-bottom:1px dotted #c8c8c8;margin-bottom:2px}
+
+.q-head{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.badge{font-size:8.4px;padding:1px 6px;border-radius:4px;white-space:nowrap}
+.q-num{font-weight:bold;font-size:9.6px}
+.q-body{font-size:9.4px;line-height:1.62;text-align:justify}
+
+.ctx{border:1px dotted #999;padding:4px 6px;margin:4px 0;line-height:1.6;font-size:8.8px;color:#333}
+
+/* 図まわり ── 文字と重ならないよう余白を確保 */
+.fig{margin:6px 0;text-align:center;clear:both}
+.fig img{max-width:100%;height:auto;display:inline-block}
+.fig-r{float:right;margin:2px 0 7px 10px;text-align:center;max-width:42%}
+.fig-r img{max-width:100%;height:auto;display:block}
+
+/* 小問＋解答欄（旧版のようにラベルを二重に出さない） */
+.subs{margin-top:5px;clear:both}
+.sub{font-size:9px;line-height:1.75;margin-bottom:1px}
+.sub-l{display:inline-block;min-width:70px;border-bottom:1px solid #333;height:11px;
+       margin-left:5px;vertical-align:baseline;text-align:center;font-size:9px;line-height:11px}
+.one-l{display:block;border-bottom:1px solid #333;height:13px;margin-top:7px;clear:both;
+       text-align:center;font-size:9px;line-height:13px}
+.sub-l.show,.one-l.show{color:#c00}
+.noans{font-size:8px;color:#bbb;margin-left:4px}
+
+.sheet-btns{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
+.pbtn{padding:10px 22px;background:#48bb78;color:#fff;border:none;border-radius:8px;
+      font-size:16px;font-family:inherit;cursor:pointer}
+.bbtn{padding:10px 22px;background:#718096;color:#fff;border:none;border-radius:8px;
+      font-size:16px;font-family:inherit;cursor:pointer}
+.abtn{padding:10px 22px;background:#dd6b20;color:#fff;border:none;border-radius:8px;
+      font-size:16px;font-family:inherit;cursor:pointer}
+.abtn.on{background:#9c4221}
+
+@media print{
+  .ctrl,.sheet-btns{display:none!important}
+  #sheet{display:block!important;padding:0}
+  body{background:#fff}
+  @page{size:A4;margin:11mm 9mm}
+  .qcols{column-count:2}
+  .badge{border:1px solid #bbb}
+  .sub-l.show,.one-l.show{color:#000}
+}
+</style>
+</head>
+<body>
+
+<div class="ctrl" id="ctrl">
+  <div class="app-title">理科テストジェネレーター</div>
+  <div class="app-sub">全<span id="totalQ"></span>問（化学・地学・物理・生物＋実験器具・環境・発展）</div>
+
+  <div class="card">
+    <div class="card-h">出題範囲</div>
+    <div id="tags"></div>
+    <div class="pool">選択中：<b id="poolN">0</b> 問</div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <label>問題数</label>
+      <input type="number" id="cnt" value="20" min="1" max="720">
+    </div>
+    <div class="frow" style="margin-top:13px">
+      <span class="flabel">順番</span>
+      <button class="ftag on" id="ordBtn" onclick="toggleOrder()">ランダム</button>
+      <span class="ordnote" id="ordNote">出題順をシャッフルします</span>
+    </div>
+    <div class="chk" style="margin-top:12px;display:flex;align-items:center;gap:8px;font-size:14px;color:#4a5568">
+      <input type="checkbox" id="withans" style="width:18px;height:18px">
+      <label for="withans" style="min-width:auto;cursor:pointer">解答を表示した状態で作成する</label>
+    </div>
+  </div>
+
+  <button class="btn" id="genBtn" onclick="generate()">テストを作成する</button>
+  <div class="info">※ 毎回ランダムに出題されます<br>※ 図のある問題は図つきで出ます<br>※ 解答は化学分野（第1〜3節）のみ収録しています</div>
+</div>
+
+<div id="sheet">
+  <div class="sh-head">
+    <span class="sh-title" id="shTitle">理科テスト</span>
+    <span class="sh-meta">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿　点＿＿＿</span>
+  </div>
+  <div class="qcols" id="qc"></div>
+  <div class="sheet-btns">
+    <button class="pbtn" onclick="window.print()">印刷する</button>
+    <button class="bbtn" onclick="back()">戻る</button>
+    <button class="abtn" id="ansBtn" onclick="toggleAns()">解答を表示</button>
+  </div>
+</div>
+
+<script>
+/*__QDATA__*/
+
+const sel=new Set();     // 選択中の範囲キー
+let shuffleOn=true;      // 出題順をシャッフルするか
+let ansShown=false;      // 解答を表示中か
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* ── 範囲ボタンの構築 ── */
+function buildTags(){
+  const host=document.getElementById('tags');
+  document.getElementById('totalQ').textContent=Q.length;
+
+  const all=document.createElement('div'); all.className='frow';
+  all.innerHTML='<span class="flabel"></span>';
+  const ab=document.createElement('button');
+  ab.className='ftag all'; ab.textContent='全範囲'; ab.dataset.k='all';
+  ab.onclick=()=>{sel.clear(); sel.add('all'); render();};
+  all.appendChild(ab); host.appendChild(all);
+
+  GROUPS.forEach(g=>{
+    const row=document.createElement('div'); row.className='frow';
+    const lb=document.createElement('span'); lb.className='flabel'; lb.textContent=g.label;
+    row.appendChild(lb);
+
+    const eb=document.createElement('button');
+    eb.className='ftag era'; eb.textContent=g.label+'すべて'; eb.dataset.k=g.key;
+    eb.onclick=()=>toggle(g.key); row.appendChild(eb);
+
+    g.secs.forEach(s=>{
+      const b=document.createElement('button');
+      b.className='ftag'; b.textContent=SEC[s][0]+' '+SEC[s][1]; b.dataset.k=s;
+      b.onclick=()=>toggle(s); row.appendChild(b);
+    });
+    host.appendChild(row);
+  });
+  sel.add('all'); render();
+}
+
+function toggle(k){
+  sel.delete('all');
+  if(sel.has(k)) sel.delete(k); else sel.add(k);
+  if(sel.size===0) sel.add('all');
+  render();
+}
+
+/* 選択中のキーから出題対象の節を求める */
+function activeSecs(){
+  const out=new Set();
+  GROUPS.forEach(g=>{
+    if(sel.has(g.key)) g.secs.forEach(s=>out.add(s));
+    g.secs.forEach(s=>{ if(sel.has(s)) out.add(s); });
+  });
+  return out;
+}
+
+function pool(){
+  if(sel.has('all')) return Q.slice();
+  const secs=activeSecs();
+  return Q.filter(q=>secs.has(q.s));
+}
+
+function render(){
+  document.querySelectorAll('.ftag').forEach(b=>{
+    b.classList.toggle('on', sel.has(b.dataset.k));
+  });
+  const n=pool().length;
+  document.getElementById('poolN').textContent=n;
+  const cnt=document.getElementById('cnt');
+  cnt.max=n;
+  if(+cnt.value>n) cnt.value=n;
+  document.getElementById('genBtn').disabled = n<1;
+}
+
+function titleOf(){
+  if(sel.has('all')) return '理科テスト（全範囲）';
+  const names=[];
+  GROUPS.forEach(g=>{
+    if(sel.has(g.key)){ names.push(g.label); return; }
+    g.secs.forEach(s=>{ if(sel.has(s)) names.push(SEC[s][0]); });
+  });
+  return '理科テスト　'+names.join('・');
+}
+
+/* 出題順：ランダム ⇄ 番号順 */
+function toggleOrder(){
+  shuffleOn=!shuffleOn;
+  const b=document.getElementById('ordBtn');
+  b.textContent = shuffleOn?'ランダム':'番号順';
+  b.classList.toggle('on', shuffleOn);
+  document.getElementById('ordNote').textContent =
+    shuffleOn?'出題順をシャッフルします':'小さい番号から順に並べます';
+}
+
+/* ── テスト生成 ── */
+function generate(){
+  const P=pool();
+  if(!P.length) return;
+  const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||20));
+  const showAns=document.getElementById('withans').checked;
+
+  let list=shuffle(P.slice()).slice(0,cnt);
+  if(!shuffleOn) list.sort((a,b)=>a.id-b.id);
+
+  const c=document.getElementById('qc');
+  c.innerHTML='';
+  list.forEach((q,i)=>c.appendChild(qEl(q,i)));
+
+  document.getElementById('shTitle').textContent=titleOf();
+  setAns(showAns);
+  document.getElementById('ctrl').style.display='none';
+  document.getElementById('sheet').style.display='block';
+  window.scrollTo(0,0);
+}
+
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* 解答の表示 ⇄ 非表示（作り直さずその場で切り替える） */
+function toggleAns(){ setAns(!ansShown); }
+
+function setAns(on){
+  ansShown=on;
+  document.querySelectorAll('#qc .sub-l, #qc .one-l').forEach(e=>{
+    e.textContent = on ? (e.dataset.a||'') : '';
+    e.classList.toggle('show', on);
+  });
+  const b=document.getElementById('ansBtn');
+  b.textContent = on?'解答を隠す':'解答を表示';
+  b.classList.toggle('on', on);
+}
+
+/* 図の出し方を決める。
+   幅広指定の図と、記号（A〜Iなど）を多く問う図は本文の下に大きく出す。
+   それ以外は右に回り込ませて縦の場所を節約する。 */
+function figHtml(key,q){
+  const f=FIGS[key]; if(!f) return ['',''];
+  const manyRefs = (q.sub||[]).length>=5;
+  const block = f.wide || manyRefs;
+  const mh = block ? Math.max(f.mh,42) : f.mh;
+  const img=`<img src="${f.src}" style="max-height:${mh}mm">`;
+  return block ? ['', `<div class="fig">${img}</div>`]
+               : [`<span class="fig-r">${img}</span>`, ''];
+}
+
+function qEl(q,i){
+  const sec=SEC[q.s];
+  const badge=`<span class="badge" style="background:${sec[2]};color:${sec[3]}">${sec[0]}</span>`;
+
+  let figR='', figB='';
+  if(q.fig){ const [r,b]=figHtml(q.fig,q); figR+=r; figB+=b; }
+  if(q.ref_fig){
+    const [r,b]=figHtml(q.ref_fig,q);
+    const note='<div class="ctx" style="border-style:solid;border-color:#ddd">※参照図（関連問題より）</div>';
+    if(b) figB+=note+b; else figR+=r;
+  }
+
+  const ctx=q.ctx?`<div class="ctx">${q.ctx}</div>`:'';
+
+  // 小問は文と解答欄を1行にまとめる（旧版のラベル二重表示を解消）
+  // 解答データがあれば sub-l / one-l に data-a として埋め込み、あとで表示/非表示を切り替える
+  const a=q.a||[];
+  let subs='';
+  if(q.sub && q.sub.length){
+    subs='<div class="subs">'
+       + q.sub.map((s,i)=>{
+           const v=a.length===q.sub.length?a[i]:(a.length===1?a[0]:'');
+           return `<div class="sub">${s}<span class="sub-l" data-a="${esc(v)}"></span></div>`;
+         }).join('')
+       + '</div>';
+  }else if(!q.fig_table){
+    subs=`<span class="one-l" data-a="${esc(a[0]||'')}"></span>`;
+  }
+
+  const table=q.fig_table==='evap'?EVAP_TABLE:'';
+
+  const d=document.createElement('div');
+  d.className='q';
+  d.innerHTML=`<div class="q-head">${badge}<span class="q-num">問${i+1}</span>`
+            + `<span style="font-size:8.4px;color:#999">No.${q.id}</span></div>`
+            + `<div class="q-body">${figR}${q.q}</div>`
+            + ctx + figB + table + subs;
+  return d;
+}
+
+function back(){
+  document.getElementById('ctrl').style.display='block';
+  document.getElementById('sheet').style.display='none';
+}
+
+buildTags();
+</script>
+</body>
+</html>

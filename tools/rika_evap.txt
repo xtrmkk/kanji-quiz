@@ -1,0 +1,9 @@
+EVAP_TABLE = """<table style="border-collapse:collapse;font-size:12px;margin:6px 0;width:100%">
+<thead><tr>
+<th style="border:1px solid #bbb;padding:4px 8px;background:#f0f0f0;width:22%"></th>
+<th style="border:1px solid #bbb;padding:4px 8px;background:#f0f0f0;width:39%">蒸発</th>
+<th style="border:1px solid #bbb;padding:4px 8px;background:#f0f0f0;width:39%">ふっとう</th>
+</tr></thead><tbody>
+<tr><td style="border:1px solid #bbb;padding:4px 8px;background:#f9f9f9;font-weight:500">温度</td><td style="border:1px solid #bbb;height:32px"></td><td style="border:1px solid #bbb;height:32px"></td></tr>
+<tr><td style="border:1px solid #bbb;padding:4px 8px;background:#f9f9f9;font-weight:500">場所</td><td style="border:1px solid #bbb;height:32px"></td><td style="border:1px solid #bbb;height:32px"></td></tr>
+</tbody></table>"""
