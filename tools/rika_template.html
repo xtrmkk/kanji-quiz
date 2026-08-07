@@ -305,11 +305,14 @@ function qEl(q,i){
   // 小問は文と解答欄を1行にまとめる（旧版のラベル二重表示を解消）
   // 解答データがあれば sub-l / one-l に data-a として埋め込み、あとで表示/非表示を切り替える
   const a=q.a||[];
+  // 解答が小問ごとに1つずつ揃っているときだけ各行に対応させる。
+  // それ以外（表形式などをまとめて1本の解答文にした場合）は先頭行にだけ全文を出す。
+  const perLine = a.length===((q.sub||[]).length||1);
   let subs='';
   if(q.sub && q.sub.length){
     subs='<div class="subs">'
        + q.sub.map((s,i)=>{
-           const v=a.length===q.sub.length?a[i]:(a.length===1?a[0]:'');
+           const v = perLine ? a[i] : (i===0 ? (a[0]||'') : '');
            return `<div class="sub">${s}<span class="sub-l" data-a="${esc(v)}"></span></div>`;
          }).join('')
        + '</div>';
