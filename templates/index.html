@@ -1,191 +1,186 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>漢字テストジェネレーター</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>テストジェネレーター</title>
+<style>
+:root{
+  --bg:#f2f4f8;
+  --ink:#1a1d29;
+  --sub:#6b7280;
+  --card:#ffffff;
+  --line:#eceef2;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,'Hiragino Kaku Gothic ProN','Helvetica Neue',Arial,sans-serif;
+  background:
+    radial-gradient(900px 500px at 15% -10%, #eef1ff 0%, transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, #eafbf3 0%, transparent 55%),
+    var(--bg);
+  min-height:100vh;
+  color:var(--ink);
+  padding:48px 20px 64px;
+}
 
-    body {
-      font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
-      background: #f0f2f5;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px 16px;
-    }
+.wrap{max-width:960px;margin:0 auto}
 
-    .card {
-      background: #fff;
-      border-radius: 16px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-      max-width: 440px;
-      width: 100%;
-      padding: 36px 28px 32px;
-      text-align: center;
-    }
+.hero{text-align:center;margin-bottom:40px}
+.hero-badge{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;
+  color:#5a4fe0;background:#eeecff;padding:5px 12px;border-radius:99px;margin-bottom:14px;
+}
+.hero h1{font-size:30px;font-weight:800;letter-spacing:-.01em;margin-bottom:8px}
+.hero p{font-size:14px;color:var(--sub);line-height:1.7}
 
-    .icon { font-size: 48px; margin-bottom: 12px; }
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+}
+@media (max-width:840px){ .grid{grid-template-columns:1fr} }
 
-    h1 {
-      font-size: 22px;
-      font-weight: 700;
-      color: #1a1a2e;
-      margin-bottom: 6px;
-    }
+.card{
+  background:var(--card);
+  border-radius:20px;
+  border:1px solid var(--line);
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
+  padding:26px 24px 24px;
+  display:flex;
+  flex-direction:column;
+  transition:transform .18s ease, box-shadow .18s ease;
+}
+.card:hover{transform:translateY(-3px); box-shadow:0 12px 28px rgba(16,24,40,.09)}
 
-    .subtitle {
-      font-size: 13px;
-      color: #666;
-      margin-bottom: 28px;
-      line-height: 1.6;
-    }
+.card-icon{
+  width:52px;height:52px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;margin-bottom:16px;
+}
+.card.c-kokugo .card-icon{background:#eeecff}
+.card.c-shakai .card-icon{background:#e3f6ea}
+.card.c-rika   .card-icon{background:#e4f4f6}
 
-    .info-box {
-      background: #f7f8fc;
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 28px;
-      text-align: left;
-    }
+.card h2{font-size:18px;font-weight:800;margin-bottom:4px}
+.card .desc{font-size:12.5px;color:var(--sub);line-height:1.65;margin-bottom:16px;min-height:52px}
 
-    .info-box ul {
-      list-style: none;
-      padding: 0;
-    }
+.stat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px}
+.stat{
+  font-size:11px;font-weight:600;color:#444;background:#f5f6f9;
+  border-radius:8px;padding:4px 9px;white-space:nowrap;
+}
+.card.c-kokugo .stat{color:#4f46e5;background:#eeecff}
+.card.c-shakai .stat{color:#1f8a4c;background:#e3f6ea}
+.card.c-rika   .stat{color:#0f7c8a;background:#e4f4f6}
 
-    .info-box li {
-      font-size: 13px;
-      color: #444;
-      padding: 5px 0;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+.spacer{flex:1}
 
-    .info-box li:last-child { border-bottom: none; }
+.btn{
+  display:block;width:100%;text-align:center;
+  padding:13px;border-radius:12px;border:none;
+  font-size:14.5px;font-weight:700;letter-spacing:.02em;
+  cursor:pointer;text-decoration:none;color:#fff;
+  transition:filter .15s ease, transform .1s ease;
+}
+.btn:hover{filter:brightness(1.06)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{filter:grayscale(.4) brightness(.9);cursor:not-allowed}
 
-    .badge {
-      background: #4f46e5;
-      color: #fff;
-      border-radius: 99px;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 2px 8px;
-      white-space: nowrap;
-    }
+.c-kokugo .btn{background:linear-gradient(135deg,#5a52ea,#4338ca)}
+.c-shakai .btn{background:linear-gradient(135deg,#34a866,#1f8a4c)}
+.c-rika   .btn{background:linear-gradient(135deg,#18a2ae,#0f7c8a)}
 
-    .btn {
-      display: block;
-      width: 100%;
-      padding: 16px;
-      background: #4f46e5;
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-size: 17px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-      letter-spacing: 0.04em;
-    }
+.card .foot-note{margin-top:10px;font-size:10.5px;color:#9aa0ab;line-height:1.6;text-align:center}
 
-    .btn:hover { background: #4338ca; }
-    .btn:active { transform: scale(0.98); }
+.spinner{
+  display:inline-block;width:14px;height:14px;
+  border:2px solid rgba(255,255,255,.45);border-top-color:#fff;
+  border-radius:50%;animation:spin .7s linear infinite;
+  vertical-align:middle;margin-right:6px;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-    .btn:disabled {
-      background: #a5b4fc;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .note {
-      margin-top: 16px;
-      font-size: 11px;
-      color: #999;
-      line-height: 1.6;
-    }
-
-    .spinner {
-      display: inline-block;
-      width: 18px;
-      height: 18px;
-      border: 3px solid rgba(255,255,255,0.4);
-      border-top-color: #fff;
-      border-radius: 50%;
-      animation: spin 0.7s linear infinite;
-      vertical-align: middle;
-      margin-right: 6px;
-    }
-
-    @keyframes spin { to { transform: rotate(360deg); } }
-  </style>
+.global-note{
+  margin-top:36px;text-align:center;font-size:11.5px;color:#9aa0ab;line-height:1.8;
+}
+</style>
 </head>
 <body>
-  <div class="card">
-    <div class="icon">📝</div>
-    <h1>漢字テストジェネレーター</h1>
-    <p class="subtitle">対義語 224組から毎回ランダムに60問を出題</p>
+<div class="wrap">
 
-    <div class="info-box">
-      <ul>
-        <li>
-          <span class="badge">一</span>
-          読み仮名を見て漢字を書く（升目あり）20問
-        </li>
-        <li>
-          <span class="badge">二</span>
-          漢字の読み仮名をひらがなで書く 20問
-        </li>
-        <li>
-          <span class="badge">三</span>
-          対義語を書く 20問
-        </li>
-      </ul>
-    </div>
-
-    <form id="genForm" action="/generate" method="post">
-      <button type="submit" class="btn" id="genBtn">
-        テストを作成する
-      </button>
-    </form>
-
-    <p class="note">
-      PDFがダウンロードされます。A4用紙に印刷してご使用ください。<br>
-      ※ サーバーが起動中でない場合、最初のアクセスに少し時間がかかることがあります。
-    </p>
-
-    <div style="margin-top:20px;padding-top:20px;border-top:1px solid #eee">
-      <a href="/shakai" style="display:block;width:100%;padding:14px;background:#38a169;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;text-align:center;letter-spacing:0.04em">
-        社会テスト（歴史：古代〜現代）
-      </a>
-      <p style="margin-top:8px;font-size:11px;color:#999">旧石器〜現代・重要史料 全287問からランダム出題</p>
-    </div>
-
-    <div style="margin-top:16px">
-      <a href="/rika" style="display:block;width:100%;padding:14px;background:#2f855a;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;text-align:center;letter-spacing:0.04em">
-        理科テスト
-      </a>
-      <p style="margin-top:8px;font-size:11px;color:#999">化学・地学・物理・生物 全720問からランダム出題</p>
-    </div>
+  <div class="hero">
+    <span class="hero-badge">FREE PRINT TEST GENERATOR</span>
+    <h1>テストジェネレーター</h1>
+    <p>国語・社会・理科、毎回ランダムに出題される印刷用テストをその場で作成</p>
   </div>
 
-  <script>
-    const form = document.getElementById('genForm');
-    const btn  = document.getElementById('genBtn');
+  <div class="grid">
 
-    form.addEventListener('submit', () => {
-      btn.disabled = true;
-      btn.innerHTML = '<span class="spinner"></span>生成中…';
-      // Re-enable after 8 seconds (PDF should be downloaded by then)
-      setTimeout(() => {
-        btn.disabled = false;
-        btn.textContent = 'テストを作成する';
-      }, 8000);
-    });
-  </script>
+    <div class="card c-kokugo">
+      <div class="card-icon">📝</div>
+      <h2>国語テスト</h2>
+      <p class="desc">対義語224組から毎回ランダムに60問を出題。升目つきの解答欄でPDFをダウンロード。</p>
+      <div class="stat-row">
+        <span class="stat">対義語 224組</span>
+        <span class="stat">全60問</span>
+        <span class="stat">PDF出力</span>
+      </div>
+      <div class="spacer"></div>
+      <form id="genForm" action="/generate" method="post">
+        <button type="submit" class="btn" id="genBtn">テストを作成する</button>
+      </form>
+      <p class="foot-note">PDFをダウンロードしA4用紙に印刷してください</p>
+    </div>
+
+    <div class="card c-shakai">
+      <div class="card-icon">🏯</div>
+      <h2>社会テスト</h2>
+      <p class="desc">歴史：旧石器〜現代・公民・重要史料まで、範囲を選んでランダム出題。図・写真つき。</p>
+      <div class="stat-row">
+        <span class="stat">全367問</span>
+        <span class="stat">範囲選択</span>
+        <span class="stat">解答表示</span>
+      </div>
+      <div class="spacer"></div>
+      <a href="/shakai" class="btn">テストを開く</a>
+      <p class="foot-note">古代〜現代・公民・重要史料からランダム出題</p>
+    </div>
+
+    <div class="card c-rika">
+      <div class="card-icon">🧪</div>
+      <h2>理科テスト</h2>
+      <p class="desc">化学・地学・物理・生物・実験器具・環境問題まで、分野別に範囲を選んで出題。</p>
+      <div class="stat-row">
+        <span class="stat">全720問</span>
+        <span class="stat">範囲選択</span>
+        <span class="stat">解答表示</span>
+      </div>
+      <div class="spacer"></div>
+      <a href="/rika" class="btn">テストを開く</a>
+      <p class="foot-note">化学・地学・物理・生物からランダム出題</p>
+    </div>
+
+  </div>
+
+  <p class="global-note">
+    サーバーが起動中でない場合、最初のアクセスに少し時間がかかることがあります。
+  </p>
+
+</div>
+
+<script>
+  const form = document.getElementById('genForm');
+  const btn  = document.getElementById('genBtn');
+
+  form.addEventListener('submit', () => {
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>生成中…';
+    setTimeout(() => {
+      btn.disabled = false;
+      btn.textContent = 'テストを作成する';
+    }, 8000);
+  });
+</script>
 </body>
 </html>
