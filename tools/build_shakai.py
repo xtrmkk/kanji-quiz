@@ -15,6 +15,7 @@ templates/shakai.html が実際に使うファイルで、単体で開けるス�
   tools/data_kindai.py  第11節 近代（明治〜昭和・戦前）  487-546
   tools/data_gendai.py  第12節 現代（昭和・戦後〜現代）  547-566
   tools/data_shiryo.py  第13節 歴史重要史料のまとめ      567-580
+  tools/data_koumin.py  第14〜17節 公民編                581-660
 """
 import base64, json, os, sys
 
@@ -23,10 +24,10 @@ ROOT = os.path.dirname(HERE)
 FIG  = os.path.join(HERE, 'figs')
 sys.path.insert(0, HERE)
 
-import data_kodai, data_chusei, data_kinsei, data_kindai, data_gendai, data_shiryo
+import data_kodai, data_chusei, data_kinsei, data_kindai, data_gendai, data_shiryo, data_koumin
 
 Q = (data_kodai.Q + data_chusei.Q + data_kinsei.Q
-     + data_kindai.Q + data_gendai.Q + data_shiryo.Q)
+     + data_kindai.Q + data_gendai.Q + data_shiryo.Q + data_koumin.Q)
 
 # ── 出題範囲（画面上のボタン） ─────────────────────────────────────────
 RANGES = [
@@ -59,6 +60,12 @@ RANGES = [
       {'key':'r2','name':'近世',          'range':[573,575]},
       {'key':'r3','name':'近代〜現代',    'range':[576,580]},
   ]},
+  {'key':'koumin', 'label':'公民', 'name':'公民すべて', 'range':[581,660], 'subs':[
+      {'key':'p1','name':'日本国憲法',        'range':[581,600]},
+      {'key':'p2','name':'三権分立',          'range':[601,625]},
+      {'key':'p3','name':'公民その他・現代日本','range':[626,645]},
+      {'key':'p4','name':'国際連合・国際社会', 'range':[646,660]},
+  ]},
 ]
 
 # ── 図（切り出し画像と表示最大高さmm） ────────────────────────────────
@@ -74,6 +81,8 @@ FIGS = {
   'q447':28,'q452':28,'q456':22,'q465':26,'q476':22,'q477':22,
   # 近代
   'q488':30,'q504':24,'q505':24,'q508':22,'q509':24,'q515':38,'q524':24,'q530':20,
+  # 公民
+  'q601_sanken':30,'q616_gyosei':52,'q643_heritage':52,
 }
 
 
