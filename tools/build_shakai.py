@@ -91,8 +91,9 @@ FIGS = {
   # 公民
   'q601_sanken':30,'q616_gyosei':52,'q643_heritage':52,
   # 発展知識
-  'q661_symbols':18,'q662_map':50,'q663_world_japan':60,'q667_japan':58,
+  'q661_symbols':18,'q662_map':58,'q663_world_japan':70,'q667_japan':58,
   'q672_aigamo':30,'q677_tokyo23':44,'q680_world':30,
+  'q704_budget':40,'q705_gyosei':56,'q706_dhondt':46,'q708_table':28,'q709_table':40,
 }
 
 
