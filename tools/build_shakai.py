@@ -16,6 +16,7 @@ templates/shakai.html が実際に使うファイルで、単体で開けるス�
   tools/data_gendai.py  第12節 現代（昭和・戦後〜現代）  547-566
   tools/data_shiryo.py  第13節 歴史重要史料のまとめ      567-580
   tools/data_koumin.py  第14〜17節 公民編                581-660
+  tools/data_hatten.py  第1〜4節  発展知識編              661-720
 """
 import base64, json, os, sys
 
@@ -24,10 +25,10 @@ ROOT = os.path.dirname(HERE)
 FIG  = os.path.join(HERE, 'figs')
 sys.path.insert(0, HERE)
 
-import data_kodai, data_chusei, data_kinsei, data_kindai, data_gendai, data_shiryo, data_koumin
+import data_kodai, data_chusei, data_kinsei, data_kindai, data_gendai, data_shiryo, data_koumin, data_hatten
 
 Q = (data_kodai.Q + data_chusei.Q + data_kinsei.Q
-     + data_kindai.Q + data_gendai.Q + data_shiryo.Q + data_koumin.Q)
+     + data_kindai.Q + data_gendai.Q + data_shiryo.Q + data_koumin.Q + data_hatten.Q)
 
 # ── 出題範囲（画面上のボタン） ─────────────────────────────────────────
 RANGES = [
@@ -66,6 +67,12 @@ RANGES = [
       {'key':'p3','name':'公民その他・現代日本','range':[626,645]},
       {'key':'p4','name':'国際連合・国際社会', 'range':[646,660]},
   ]},
+  {'key':'hatten', 'label':'発展知識', 'name':'発展知識すべて', 'range':[661,720], 'subs':[
+      {'key':'h1','name':'地理のプラス知識',            'range':[661,680]},
+      {'key':'h2','name':'歴史のプラス知識',            'range':[681,700]},
+      {'key':'h3','name':'公民・国際社会のプラス知識',  'range':[701,710]},
+      {'key':'h4','name':'日本の伝統文化のプラス知識',  'range':[711,720]},
+  ]},
 ]
 
 # ── 図（切り出し画像と表示最大高さmm） ────────────────────────────────
@@ -83,6 +90,9 @@ FIGS = {
   'q488':30,'q504':24,'q505':24,'q508':22,'q509':24,'q515':38,'q524':24,'q530':20,
   # 公民
   'q601_sanken':30,'q616_gyosei':52,'q643_heritage':52,
+  # 発展知識
+  'q661_symbols':18,'q662_map':50,'q663_world_japan':60,'q667_japan':58,
+  'q672_aigamo':30,'q677_tokyo23':44,'q680_world':30,
 }
 
 
