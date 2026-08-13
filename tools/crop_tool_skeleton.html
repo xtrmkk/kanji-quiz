@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>図クロップツール</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Helvetica Neue',Arial,sans-serif;background:#1a1a2e;color:#eee;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+#toolbar{background:#16213e;padding:10px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #0f3460;flex-shrink:0}
+#toolbar h2{font-size:14px;color:#e94560;margin-right:6px;white-space:nowrap}
+select{background:#0f3460;color:#eee;border:1px solid #e94560;padding:4px 8px;border-radius:4px;font-size:13px}
+#figNameInput{background:#0f3460;color:#fff;border:1px solid #4cc9f0;padding:4px 8px;border-radius:4px;font-size:13px;width:200px}
+#figNameInput::placeholder{color:#aaa}
+button{background:#e94560;color:#fff;border:none;padding:5px 12px;border-radius:4px;cursor:pointer;font-size:13px;font-weight:bold}
+button:hover{background:#c73652}
+button.sec{background:#0f3460;border:1px solid #4cc9f0}
+button.sec:hover{background:#1a4a7a}
+#clearBtn{background:#555}
+#clearBtn:hover{background:#777}
+#status{font-size:12px;color:#4cc9f0;margin-left:4px}
+#main{display:flex;flex:1;overflow:hidden;gap:0}
+#canvasWrap{flex:1;overflow:auto;background:#111;position:relative;cursor:crosshair}
+canvas{display:block}
+#sidebar{width:340px;background:#16213e;border-left:2px solid #0f3460;display:flex;flex-direction:column;overflow:hidden}
+#sidebar h3{padding:10px 12px;font-size:13px;color:#4cc9f0;border-bottom:1px solid #0f3460;background:#0f3460}
+#cropList{flex:1;overflow-y:auto;padding:8px}
+.crop-item{background:#0f3460;border:1px solid #4cc9f0;border-radius:6px;padding:8px 10px;margin-bottom:8px;font-size:12px;position:relative}
+.crop-item .fig{color:#e94560;font-weight:bold;font-size:13px;margin-bottom:3px}
+.crop-item .info{color:#aaa;font-size:11px}
+.crop-item .del{position:absolute;top:6px;right:6px;background:#e94560;color:#fff;border:none;padding:2px 6px;border-radius:3px;cursor:pointer;font-size:11px}
+#outputWrap{border-top:2px solid #0f3460;padding:8px}
+#outputWrap h4{font-size:12px;color:#4cc9f0;margin-bottom:4px}
+#output{width:100%;height:120px;background:#0f3460;color:#eee;border:1px solid #4cc9f0;padding:6px;font-size:11px;font-family:monospace;resize:none;border-radius:4px}
+#copyBtn{margin-top:6px;width:100%;background:#4cc9f0;color:#000;font-weight:bold}
+#copyBtn:hover{background:#7dd8f5}
+#nav{display:flex;gap:4px;align-items:center;flex-shrink:0}
+#nav span{font-size:12px;color:#aaa}
+.tip{font-size:11px;color:#888;white-space:nowrap}
+</style>
+</head>
+<body>
+<div id="toolbar">
+  <h2>📐 図クロップツール</h2>
+  <select id="pageSelect"></select>
+  <div id="nav">
+    <button class="sec" onclick="prevPage()">◀</button>
+    <span id="pageNum">1/24</span>
+    <button class="sec" onclick="nextPage()">▶</button>
+  </div>
+  <input id="figNameInput" type="text" placeholder="fig名 (例: q607_apparatus)" />
+  <button onclick="addCrop()">✅ クロップ追加</button>
+  <button id="clearBtn" onclick="clearRect()">✗ 解除</button>
+  <span id="status">ドラッグして範囲を選択</span>
+  <span class="tip">Shift+ドラッグで追加</span>
+</div>
+<div id="main">
+  <div id="canvasWrap">
+    <canvas id="cv"></canvas>
+  </div>
+  <div id="sidebar">
+    <h3>📋 クロップリスト (<span id="cropCount">0</span>件)</h3>
+    <div id="cropList"></div>
+    <div id="outputWrap">
+      <h4>出力 (クリップボードへコピー)</h4>
+      <textarea id="output" readonly></textarea>
+      <button id="copyBtn" onclick="copyOutput()">📋 コピー</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var PAGES={/*__PAGES__*/};
+var PAGE_LIST=[/*__PAGE_LIST__*/];
+var crops=[];
+var currentPage=0;
+var img=new Image();
+var rect=null,dragging=false,startX=0,startY=0;
+var scale=1;
+
+var cv=document.getElementById('cv');
+var ctx=cv.getContext('2d');
+var wrap=document.getElementById('canvasWrap');
+var sel=document.getElementById('pageSelect');
+
+// Populate select
+PAGE_LIST.forEach(function(p,i){
+  var opt=document.createElement('option');
+  opt.value=i;
+  opt.textContent=p.replace('.jpg','');
+  sel.appendChild(opt);
+});
+sel.addEventListener('change',function(){loadPage(parseInt(this.value));});
+
+function loadPage(idx){
+  currentPage=idx;
+  sel.value=idx;
+  document.getElementById('pageNum').textContent=(idx+1)+'/'+PAGE_LIST.length;
+  rect=null;
+  var key=PAGE_LIST[idx];
+  img.onload=function(){
+    // Scale to fit canvas wrap width
+    var maxW=wrap.clientWidth-20;
+    scale=Math.min(1,maxW/img.naturalWidth);
+    cv.width=Math.round(img.naturalWidth*scale);
+    cv.height=Math.round(img.naturalHeight*scale);
+    draw();
+  };
+  img.src=PAGES[key.replace('.jpg','')];
+}
+
+function draw(){
+  ctx.drawImage(img,0,0,cv.width,cv.height);
+  // Draw existing crops for this page
+  var pageKey=PAGE_LIST[currentPage].replace('.jpg','');
+  crops.forEach(function(c){
+    if(c.page!==pageKey) return;
+    ctx.strokeStyle='#4cc9f0';
+    ctx.lineWidth=2;
+    ctx.strokeRect(c.sx*scale,c.sy*scale,c.sw*scale,c.sh*scale);
+    ctx.fillStyle='rgba(76,201,240,0.15)';
+    ctx.fillRect(c.sx*scale,c.sy*scale,c.sw*scale,c.sh*scale);
+    ctx.fillStyle='#4cc9f0';
+    ctx.font='bold 13px monospace';
+    ctx.fillText(c.fig,c.sx*scale+3,c.sy*scale+16);
+  });
+  if(rect){
+    ctx.strokeStyle='#e94560';
+    ctx.lineWidth=2;
+    ctx.setLineDash([5,3]);
+    ctx.strokeRect(rect.x,rect.y,rect.w,rect.h);
+    ctx.setLineDash([]);
+    ctx.fillStyle='rgba(233,69,96,0.12)';
+    ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+  }
+}
+
+cv.addEventListener('mousedown',function(e){
+  var r=cv.getBoundingClientRect();
+  startX=e.clientX-r.left;
+  startY=e.clientY-r.top;
+  dragging=true;
+  rect={x:startX,y:startY,w:0,h:0};
+});
+cv.addEventListener('mousemove',function(e){
+  if(!dragging) return;
+  var r=cv.getBoundingClientRect();
+  var cx=e.clientX-r.left,cy=e.clientY-r.top;
+  rect={x:Math.min(startX,cx),y:Math.min(startY,cy),w:Math.abs(cx-startX),h:Math.abs(cy-startY)};
+  draw();
+  document.getElementById('status').textContent='選択中: '+Math.round(rect.w/scale)+'×'+Math.round(rect.h/scale)+' px';
+});
+cv.addEventListener('mouseup',function(e){
+  dragging=false;
+  if(rect&&rect.w<5&&rect.h<5) rect=null;
+  draw();
+  if(rect) document.getElementById('status').textContent='選択完了: '+Math.round(rect.w/scale)+'×'+Math.round(rect.h/scale)+' px → fig名を入力して「クロップ追加」';
+});
+
+function addCrop(){
+  var figName=document.getElementById('figNameInput').value.trim();
+  if(!figName){alert('fig名を入力してください');return;}
+  if(!rect||rect.w<5){alert('範囲を選択してください');return;}
+  var pageKey=PAGE_LIST[currentPage].replace('.jpg','');
+  var crop={
+    fig:figName,
+    page:pageKey,
+    sx:Math.round(rect.x/scale),
+    sy:Math.round(rect.y/scale),
+    sw:Math.round(rect.w/scale),
+    sh:Math.round(rect.h/scale)
+  };
+  crops.push(crop);
+  rect=null;
+  draw();
+  updateList();
+  // Auto-increment fig name number
+  var m=figName.match(/^(.*?)(\d+)(_.*)?$/);
+  if(m){
+    document.getElementById('figNameInput').value=m[1]+(parseInt(m[2])+1)+(m[3]||'');
+  }
+  document.getElementById('status').textContent='追加しました: '+figName;
+}
+
+function clearRect(){rect=null;draw();document.getElementById('status').textContent='解除しました';}
+
+function deleteCrop(i){crops.splice(i,1);updateList();draw();}
+
+function updateList(){
+  var list=document.getElementById('cropList');
+  var count=document.getElementById('cropCount');
+  count.textContent=crops.length;
+  list.innerHTML='';
+  crops.forEach(function(c,i){
+    var div=document.createElement('div');
+    div.className='crop-item';
+    div.innerHTML='<div class="fig">'+c.fig+'</div>'
+      +'<div class="info">ページ: '+c.page+'</div>'
+      +'<div class="info">座標: ('+c.sx+','+c.sy+') サイズ: '+c.sw+'×'+c.sh+'</div>'
+      +'<button class="del" onclick="deleteCrop('+i+')">削除</button>';
+    list.appendChild(div);
+  });
+  // Update output
+  var lines=crops.map(function(c){
+    return JSON.stringify({fig:c.fig,page:c.page,x:c.sx,y:c.sy,w:c.sw,h:c.sh});
+  });
+  document.getElementById('output').value=lines.join(',\n');
+}
+
+function copyOutput(){
+  var ta=document.getElementById('output');
+  ta.select();
+  document.execCommand('copy');
+  document.getElementById('copyBtn').textContent='✅ コピーしました！';
+  setTimeout(function(){document.getElementById('copyBtn').textContent='📋 コピー';},1500);
+}
+
+function prevPage(){if(currentPage>0) loadPage(currentPage-1);}
+function nextPage(){if(currentPage<PAGE_LIST.length-1) loadPage(currentPage+1);}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='ArrowLeft') prevPage();
+  else if(e.key==='ArrowRight') nextPage();
+  else if(e.key==='Enter') addCrop();
+  else if(e.key==='Escape') clearRect();
+});
+
+// Init
+loadPage(0);
+</script>
+</body>
+</html>
