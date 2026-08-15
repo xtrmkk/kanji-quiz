@@ -17,6 +17,7 @@ templates/shakai.html が実際に使うファイルで、単体で開けるス�
   tools/data_shiryo.py  第13節 歴史重要史料のまとめ      567-580
   tools/data_koumin.py  第14〜17節 公民編                581-660
   tools/data_hatten.py  第1〜4節  発展知識編              661-720
+  tools/data_chiri.py   第1〜3節  地理編                  1-129
 """
 import base64, json, os, sys
 
@@ -25,13 +26,19 @@ ROOT = os.path.dirname(HERE)
 FIG  = os.path.join(HERE, 'figs')
 sys.path.insert(0, HERE)
 
-import data_kodai, data_chusei, data_kinsei, data_kindai, data_gendai, data_shiryo, data_koumin, data_hatten
+import data_kodai, data_chusei, data_kinsei, data_kindai, data_gendai, data_shiryo, data_koumin, data_hatten, data_chiri
 
-Q = (data_kodai.Q + data_chusei.Q + data_kinsei.Q
+Q = (data_chiri.Q
+     + data_kodai.Q + data_chusei.Q + data_kinsei.Q
      + data_kindai.Q + data_gendai.Q + data_shiryo.Q + data_koumin.Q + data_hatten.Q)
 
 # ── 出題範囲（画面上のボタン） ─────────────────────────────────────────
 RANGES = [
+  {'key':'chiri',  'label':'地理', 'name':'地理すべて', 'range':[1,129], 'subs':[
+      {'key':'t1','name':'国土・自然・人口', 'range':[1,60]},
+      {'key':'t2','name':'都道府県・都市',   'range':[61,94]},
+      {'key':'t3','name':'重要地名',         'range':[95,129]},
+  ]},
   {'key':'kodai',  'label':'古代', 'name':'古代すべて', 'range':[310,369], 'subs':[
       {'key':'k1','name':'旧石器〜古墳',  'range':[310,319]},
       {'key':'k2','name':'飛鳥・奈良',    'range':[320,346]},
@@ -77,6 +84,19 @@ RANGES = [
 
 # ── 図（切り出し画像と表示最大高さmm） ────────────────────────────────
 FIGS = {
+  # 地理（第1節 国土・自然・人口）
+  'q1_compass8':32,'q2_compass16':32,'q4_symbols':14,'q5_symbols':14,'q6_symbols':14,
+  'q7_symbols':14,'q8_symbols':14,'q9_symbols':16,'q10_symbols':16,'q11_symbols':16,
+  'q12_symbols':16,'q13_symbols':12,'q14_symbols':14,'q15_symbols':16,'q16_symbols':14,
+  'q17_symbols':14,'q18_symbols':14,'q22_topo':30,'q23_topo':34,'q24_globe':40,
+  'q26_currentmap':64,'q40_climate':70,'q41_climate':70,'q44_yashikimori':32,
+  'q47_disastermap':44,'q52_photos':56,'q53_photo':32,
+  # 地理（第2節 都道府県・都市）
+  'q65_shapes':56,'q69_shapes':52,'q73_shapes':60,'q77_shapes':56,'q81_shapes':60,
+  'q86_citymap':56,'q90_citymap':56,
+  # 地理（第3節 重要地名）
+  'q95_mountains':66,'q106_rivers1':64,'q111_rivers2':66,'q114_rivers3':64,
+  'q118_plains1':64,'q122_plains2':66,'q126_plains3':64,
   # 古代
   'q310':20,'q311':22,'q313':20,'q314':24,'q318':20,'q328':34,'q331':20,
   'q338':20,'q344':22,'q354':30,'q362':22,'q367':20,'q369':34,

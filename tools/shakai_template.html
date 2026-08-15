@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>社会テスト（歴史）</title>
+<title>社会テスト</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Hiragino Mincho ProN','Yu Mincho','MS Mincho',serif;background:#f0f2f5;color:#111}
@@ -133,7 +133,7 @@ input[type=number]{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-ra
 
 <div id="sheet">
   <div class="sh-head">
-    <span class="sh-title" id="shTitle">社会テスト　歴史</span>
+    <span class="sh-title" id="shTitle">社会テスト</span>
     <span class="sh-meta">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿　点＿＿＿</span>
   </div>
   <div class="qcols" id="qc"></div>
@@ -218,13 +218,13 @@ function render(){
 
 /* 選択範囲から見出しを作る */
 function titleOf(){
-  if(sel.has('all')) return '社会テスト　歴史（古代〜現代）';
+  if(sel.has('all')) return '社会テスト　全範囲（地理・歴史・公民）';
   const names=[];
   RANGES.forEach(era=>{
     if(sel.has(era.key)){ names.push(era.label); return; }
     era.subs.forEach(s=>{ if(sel.has(s.key)) names.push(s.name); });
   });
-  return '社会テスト　歴史　'+names.join('・');
+  return '社会テスト　'+names.join('・');
 }
 
 /* ── テスト生成 ── */
