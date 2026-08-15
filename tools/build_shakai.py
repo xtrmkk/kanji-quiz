@@ -86,9 +86,9 @@ RANGES = [
 FIGS = {
   # 地理（第1節 国土・自然・人口）
   'q1_compass8':32,'q2_compass16':32,'q4_symbols':14,'q5_symbols':14,'q6_symbols':14,
-  'q7_symbols':14,'q8_symbols':14,'q9_symbols':16,'q10_symbols':16,'q11_symbols':16,
-  'q12_symbols':16,'q13_symbols':12,'q14_symbols':14,'q15_symbols':16,'q16_symbols':14,
-  'q17_symbols':14,'q18_symbols':14,'q22_topo':30,'q23_topo':34,'q24_globe':40,
+  'q9_symbols':16,'q10_symbols':16,'q11_symbols':16,
+  'q12_symbols':16,'q13_symbols':12,'q14_symbols':14,'q15_symbols':16,
+  'q18_symbols':14,'q22_topo':30,'q23_topo':34,'q24_globe':40,
   'q26_currentmap':64,'q40_climate':70,'q41_climate':70,'q44_yashikimori':32,
   'q47_disastermap':44,'q52_photos':56,'q53_photo':32,
   # 地理（第2節 都道府県・都市）
