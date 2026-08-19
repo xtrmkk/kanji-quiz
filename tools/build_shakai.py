@@ -17,7 +17,7 @@ templates/shakai.html が実際に使うファイルで、単体で開けるス�
   tools/data_shiryo.py  第13節 歴史重要史料のまとめ      567-580
   tools/data_koumin.py  第14〜17節 公民編                581-660
   tools/data_hatten.py  第1〜4節  発展知識編              661-720
-  tools/data_chiri.py   第1〜3節  地理編                  1-129
+  tools/data_chiri.py   第1〜7節  地理編                  1-309
 """
 import base64, json, os, sys
 
@@ -34,10 +34,14 @@ Q = (data_chiri.Q
 
 # ── 出題範囲（画面上のボタン） ─────────────────────────────────────────
 RANGES = [
-  {'key':'chiri',  'label':'地理', 'name':'地理すべて', 'range':[1,129], 'subs':[
+  {'key':'chiri',  'label':'地理', 'name':'地理すべて', 'range':[1,309], 'subs':[
       {'key':'t1','name':'国土・自然・人口', 'range':[1,60]},
       {'key':'t2','name':'都道府県・都市',   'range':[61,94]},
       {'key':'t3','name':'重要地名',         'range':[95,129]},
+      {'key':'t4','name':'重要地名（半島・湾・ほか）', 'range':[130,164]},
+      {'key':'t5','name':'第一次産業',       'range':[165,223]},
+      {'key':'t6','name':'第二次産業・公害・環境問題', 'range':[224,268]},
+      {'key':'t7','name':'貿易・交通・通信・世界地理', 'range':[269,309]},
   ]},
   {'key':'kodai',  'label':'古代', 'name':'古代すべて', 'range':[310,369], 'subs':[
       {'key':'k1','name':'旧石器〜古墳',  'range':[310,319]},
@@ -97,6 +101,17 @@ FIGS = {
   # 地理（第3節 重要地名）
   'q95_mountains':66,'q106_rivers1':64,'q111_rivers2':66,'q114_rivers3':64,
   'q118_plains1':64,'q122_plains2':66,'q126_plains3':64,
+  # 地理（第4節 重要地名：半島・湾・ほか）
+  'q130_hantou1':60,'q133_hantou2':62,'q136_hantou3':60,'q139_bay1':60,'q143_bay2':60,
+  'q145_bay3':58,'q148_islands':52,'q153_islands2':58,'q157_lakes':56,'q162_park':50,
+  # 地理（第5節 第一次産業）
+  'q174_map1':58,'q177_map2':70,'q186_map3':62,'q189_map4':60,'q191_map5':54,
+  'q208_forest':60,'q213_gyoho':36,'q217_gyoko':56,'q219_fish':30,'q222_map6':56,
+  # 地理（第6節 第二次産業・公害・環境問題）
+  'q224_industry':58,'q238_distmap':70,'q239_map7':50,'q242_dentou':64,'q254_kougai':40,
+  # 地理（第7節 貿易・交通・通信・世界地理）
+  'q275_ports':34,'q279_shinkansen':44,'q284_highway':48,'q285_ships':22,'q286_container':36,
+  'q291_worldmap':30,'q297_asiamap':42,'q299_asiamap2':36,'q302_europemap':40,'q305_americamap':58,
   # 古代
   'q310':20,'q311':22,'q313':20,'q314':24,'q318':20,'q328':34,'q331':20,
   'q338':20,'q344':22,'q354':30,'q362':22,'q367':20,'q369':34,
