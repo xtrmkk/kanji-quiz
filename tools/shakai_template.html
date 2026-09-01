@@ -140,7 +140,7 @@ input[type=number]:focus{outline:none;border-color:#8b9ae0}
   <div class="card">
     <div class="row">
       <label>問題数</label>
-      <input type="number" id="cnt" value="15" min="1" max="300">
+      <input type="number" id="cnt" value="40" min="1" max="300">
     </div>
     <div class="frow" style="margin-top:13px">
       <span class="flabel">順番</span>
@@ -260,7 +260,7 @@ function titleOf(){
 function generate(){
   const P=pool();
   if(!P.length) return;
-  const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||15));
+  const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||40));
   const showAns=document.getElementById('withans').checked;
 
   let list=shuffle(P.slice()).slice(0,cnt);

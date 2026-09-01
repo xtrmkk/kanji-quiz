@@ -136,7 +136,7 @@ input[type=number]:focus{outline:none;border-color:#7fc7cd}
   <div class="card">
     <div class="row">
       <label>問題数</label>
-      <input type="number" id="cnt" value="20" min="1" max="720">
+      <input type="number" id="cnt" value="40" min="1" max="720">
     </div>
     <div class="frow" style="margin-top:13px">
       <span class="flabel">順番</span>
@@ -268,7 +268,7 @@ function setOrder(orderMode){
 function generate(){
   const P=pool();
   if(!P.length) return;
-  const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||20));
+  const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||40));
   const showAns=document.getElementById('withans').checked;
 
   let list=shuffle(P.slice()).slice(0,cnt);
