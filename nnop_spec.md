@@ -539,3 +539,99 @@ op1-1／op1-3／op1-4 は図なし（4のダイヤグラムは解説側だけに
 - **配点**は各小問の問題文の先頭に「3点」のように常に出す。**印刷にも出る**。
 - **全体正答率**は「正答率44%」のように出すが、**既定は非表示**。
   シート画面の「正答率を表示／隠す」ボタンで切り替える。表示中なら印刷にも出る。
+
+---
+
+# 新しい回を足す手順（第6版）
+
+第3回・夏期そっくりを足したときの反省から、手順と道具を固めた。
+**新しい回は必ず新しいセッションで始める**こと。前の回の試行錯誤を読み直さずに済み、
+そのぶん速くて安い。
+
+## 手順
+
+### 0. 雛形を作る
+
+```
+python3 tools/nnop_new_round.py --n 5 --round 4 --label 第4回 \
+        --prefix op4 --keys M1,M2,M3,M4,M5,M6
+```
+
+`tools/nnop5_rates.py` / `nnop5_data.py` / `nnop5_verify.py` ができ、
+`tools/build_nnop.py` への配線（import・ALL_GROUPS・検算・回帰テスト）まで入る。
+GROUPS は空なので、この時点で `python3 tools/build_nnop.py` は通る。
+
+### 1. PDFの構成を見る
+
+```
+python3 tools/nnop_pages.py "NN TEST/算数第4回.pdf" --list
+```
+
+NNOPは **問題用紙（その1〜3）→ 解答一覧 → 解説** の順に並んでいることが多い。
+
+### 2. 画像は1回だけ読む ［最重要］
+
+```
+python3 tools/nnop_pages.py "NN TEST/算数第4回.pdf" --pages 1-3
+python3 tools/nnop_pages.py "NN TEST/算数第4回.pdf" --pages 4 --no-grid --full
+```
+
+問題ページには **mmの目盛り**が重なって出る（赤＝50mm、青＝10mm）。
+1ページを読んだら、その場で `tools/nnop5_notes.md` に次をぜんぶ書き出す。
+
+- 大問ごとの前提文・小問の文章・図の構造
+- 小問ごとの **配点・答え・計算欄の高さ(mm)**（枠の上端と下端を目盛りで読む）
+
+**以後、画像は読み返さない。** 同じページを2度読むのが前回いちばんのむだだった。
+幅は既定900pxで文字も目盛りも読める。潰れて読めないときだけ `--width 1300`。
+
+**解説ページは読まない。** 回帰テストが落ちた大問が出たときだけ、その大問の解説を読む。
+（第3回のときは解説を全部読んだが、実際に必要だったのは1大問ぶんだった。）
+
+### 3. 正答率表 → 設問マスタ → 検算 の順に書く
+
+LMSの「小問別成績」のスクリーンショットがあれば、`nnop5_rates.py` はそれを写すだけ。
+`python3 tools/nnop5_rates.py` で**配点合計が60点**になるか必ず確かめる。
+
+`nnop5_data.py` を書くときは、**本体に書く前に小さく試す**。
+その場で数行の検算を回し、元の数値で公式解答と一致することを先に確かめてから本体に入れる。
+（第3回では書いてから3回直した。先に試していれば往復が減っていた。）
+
+### 4. ビルドして通す
+
+```
+python3 tools/build_nnop.py
+```
+
+独立検算（7.1 / 13章）と回帰テストが全候補に対して走る。落ちたらビルドされない。
+
+### 5. レイアウトを確かめる
+
+Flaskを起動して `/nnop` を開き、ブラウザのコンソールで1回だけ走らせる。
+
+```js
+let bad=[];
+for(const paper of ['a3','a4']){ setPaper(paper);
+  for(const [a,h,r] of [[false,false,false],[true,true,true]]){
+    ansShown=a; howShown=h; rateShown=r; syncBtns();
+    for(let t=0;t<15;t++){
+      document.getElementById('cnt').value=20; generate();
+      applyAns(); applyHow(); applyRate(); layoutPages();
+      const o=[...document.querySelectorAll('.pcol')]
+                .map(c=>c.scrollHeight-c.clientHeight).filter(x=>x>0);
+      if(o.length) bad.push([paper,a,t,o]);
+    }}}
+setPaper('a3'); ansShown=howShown=rateShown=false; syncBtns(); bad
+```
+
+`bad` が空なら段からのはみ出しなし。スクリーンショットは最後に1〜2枚で足りる。
+
+## やってはいけないこと（前回の失敗）
+
+| 失敗 | 代わりに |
+|---|---|
+| 枠線を画像処理で自動検出しようとする | 目盛りを重ねて目で読む（スキャンが湾曲していて4通り試して全滅した） |
+| 同じページを上下に割って読み直す | `nnop_pages.py --cols` で最初から列ごとに出す |
+| 解説ページを全部読む | 回帰テストが落ちた大問だけ読む |
+| 検算スクリプトを会話に何本も書く | `nnopN_verify.py` に書いて `build_nnop.py` から呼ぶ |
+| 1セッションで何回ぶんも足す | 1セッション＝1回ぶん |
