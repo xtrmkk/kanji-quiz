@@ -62,17 +62,28 @@ input[type=number]:focus{outline:none;border-color:#7fc7cd}
 .seg-btn.on{background:#18a2ae;color:#fff;font-weight:700;box-shadow:0 2px 6px rgba(24,162,174,.3)}
 
 /* ── テストシート ── */
-#sheet{display:none;background:#fff;padding:14px 16px 20px}
+#sheet{display:none;padding:14px 16px 20px}
 .sh-head{display:flex;justify-content:space-between;align-items:flex-end;
          border-bottom:2px solid #111;padding-bottom:5px;margin-bottom:9px}
 .sh-title{font-size:15px;font-weight:bold}
 .sh-meta{font-size:10.5px;letter-spacing:.02em}
 
-.qcols{column-count:2;column-gap:9mm;column-rule:1px solid #ddd}
-@media (max-width:640px){.qcols{column-count:1}}
+/* ── A4ページを実寸で組む ──
+   column-count の自動送りはページをまたぐ瞬間に break-inside:avoid が効かず、
+   ページ下端で問題が切れてしまう。そこでページ・段を実体の要素として作り、
+   JS（layoutPages）が1問ずつ高さを測って割りつける。 */
+#qc{display:flex;flex-direction:column;align-items:center;gap:16px}
+.page{width:192mm;height:272mm;background:#fff;overflow:hidden;
+      display:flex;flex-direction:column;
+      box-shadow:0 1px 2px rgba(16,24,40,.06),0 8px 22px rgba(16,24,40,.09)}
+.pcols{flex:1;min-height:0;display:flex;gap:9mm;
+       background:linear-gradient(#ddd,#ddd) center top/1px 100% no-repeat}
+.pcol{flex:0 0 91.5mm;width:91.5mm;overflow:hidden}
+@media screen and (max-width:880px){ #qc{zoom:.62}}
+@media screen and (max-width:580px){ #qc{zoom:.42}}
 
-.q{break-inside:avoid;page-break-inside:avoid;-webkit-column-break-inside:avoid;
-   display:inline-block;width:100%;
+.q{break-inside:avoid;page-break-inside:avoid;
+   display:flow-root;width:100%;
    padding:6px 0 8px;border-bottom:1px dotted #c8c8c8;margin-bottom:2px}
 
 .q-head{display:flex;align-items:center;gap:5px;margin-bottom:3px}
@@ -114,7 +125,9 @@ input[type=number]:focus{outline:none;border-color:#7fc7cd}
   #sheet{display:block!important;padding:0}
   body{background:#fff}
   @page{size:A4;margin:11mm 9mm}
-  .qcols{column-count:2}
+  #qc{display:block;gap:0;zoom:1}
+  .page{width:auto;height:272mm;box-shadow:none;break-after:page;page-break-after:always}
+  .page:last-child{break-after:auto;page-break-after:auto}
   .badge{border:1px solid #bbb}
   .sub-l.show,.one-l.show{color:#000}
 }
@@ -157,11 +170,11 @@ input[type=number]:focus{outline:none;border-color:#7fc7cd}
 </div>
 
 <div id="sheet">
-  <div class="sh-head">
+  <div class="sh-head" id="shHead">
     <span class="sh-title" id="shTitle">理科テスト</span>
     <span class="sh-meta">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿　点＿＿＿</span>
   </div>
-  <div class="qcols" id="qc"></div>
+  <div id="qc"></div>
   <div class="sheet-btns">
     <button class="pbtn" onclick="window.print()">印刷する</button>
     <button class="bbtn" onclick="back()">戻る</button>
@@ -274,14 +287,12 @@ function generate(){
   let list=shuffle(P.slice()).slice(0,cnt);
   if(!shuffleOn) list.sort((a,b)=>a.id-b.id);
 
-  const c=document.getElementById('qc');
-  c.innerHTML='';
-  list.forEach((q,i)=>c.appendChild(qEl(q,i)));
+  SHEET=list.map((q,i)=>qEl(q,i));
 
   document.getElementById('shTitle').textContent=titleOf();
-  setAns(showAns);
   document.getElementById('ctrl').style.display='none';
   document.getElementById('sheet').style.display='block';
+  setAns(showAns);            // 解答の反映とページ割りつけ
   window.scrollTo(0,0);
 }
 
@@ -295,13 +306,18 @@ function toggleAns(){ setAns(!ansShown); }
 
 function setAns(on){
   ansShown=on;
-  document.querySelectorAll('#qc .sub-l, #qc .one-l').forEach(e=>{
+  SHEET.forEach(el=>el.querySelectorAll('.sub-l, .one-l').forEach(e=>{
     e.textContent = on ? (e.dataset.a||'') : '';
     e.classList.toggle('show', on);
-  });
+  }));
+  syncAnsBtn();
+  paginate();      // 解答の有無で高さが変わるのでページを組み直す
+}
+
+function syncAnsBtn(){
   const b=document.getElementById('ansBtn');
-  b.textContent = on?'解答を隠す':'解答を表示';
-  b.classList.toggle('on', on);
+  b.textContent = ansShown?'解答を隠す':'解答を表示';
+  b.classList.toggle('on', ansShown);
 }
 
 /* 図の出し方を決める。
@@ -363,6 +379,75 @@ function qEl(q,i){
 function back(){
   document.getElementById('ctrl').style.display='block';
   document.getElementById('sheet').style.display='none';
+}
+
+/* ── ページ割りつけ ──────────────────────────────────────────────
+   SHEET に1問（社会は参照ペアのまとまり）ずつの要素を持たせ、
+   実寸の段幅で高さを測ってから A4 の2段に順に詰める。
+   段に入りきらない問題は次の段、段がなければ次のページの先頭へ送るので、
+   ページ下端で問題が切れることがない。 */
+let SHEET=[];      // 割りつけ対象の要素
+let PAGING=0;      // 画像待ちの競合を防ぐ通し番号
+const COL_MM=91.5; // 段の幅（A4幅192mm － 段間9mm を2等分）
+
+function pxPerMm(){
+  const d=document.createElement('div');
+  d.style.cssText='position:absolute;visibility:hidden;width:1mm;height:100mm';
+  document.body.appendChild(d);
+  const v=d.offsetHeight/100;
+  d.remove();
+  return v||3.7795;
+}
+
+/* 図の読み込みが終わってから測らないと高さがずれる */
+function paginate(){
+  const token=++PAGING;
+  const imgs=[];
+  SHEET.forEach(el=>el.querySelectorAll('img').forEach(i=>{if(!i.complete)imgs.push(i);}));
+  Promise.all(imgs.map(i=>new Promise(r=>{i.onload=i.onerror=r;})))
+         .then(()=>{ if(token===PAGING) layoutPages(); });
+}
+
+function layoutPages(){
+  const qc=document.getElementById('qc');
+  const head=document.getElementById('shHead');   // 氏名欄は1ページ目にだけ置く
+  const colW=COL_MM*pxPerMm();
+
+  // 実寸の段幅で1問ずつ高さを測る（画面の見た目とは無関係に印刷と同じ幅になる）
+  const probe=document.createElement('div');
+  probe.className='pcol';
+  probe.style.cssText='position:absolute;left:-10000px;top:0;width:'+colW+'px';
+  document.body.appendChild(probe);
+  const hs=SHEET.map(el=>{
+    probe.appendChild(el);
+    const h=el.offsetHeight+(parseFloat(getComputedStyle(el).marginBottom)||0);
+    probe.removeChild(el);
+    return h;
+  });
+  probe.remove();
+
+  qc.textContent='';
+  let cols=null,col=null,used=0,limit=0,nCol=0;
+
+  function addCol(){
+    col=document.createElement('div'); col.className='pcol';
+    cols.appendChild(col); nCol++; used=0;
+  }
+  function addPage(){
+    const page=document.createElement('div'); page.className='page';
+    if(!qc.children.length && head) page.appendChild(head);
+    cols=document.createElement('div'); cols.className='pcols';
+    page.appendChild(cols); qc.appendChild(page);
+    nCol=0; addCol();
+    limit=cols.clientHeight;    // ヘッダー分を引いた実際の段の高さ
+  }
+
+  addPage();
+  SHEET.forEach((el,i)=>{
+    if(used>0 && used+hs[i]>limit){ if(nCol<2){addCol();}else{addPage();} }
+    col.appendChild(el);
+    used+=hs[i];
+  });
 }
 
 setOrder(true);
