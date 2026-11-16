@@ -485,3 +485,162 @@ def tri345_svg(p=3, q=4, W=210, H=140, pad=18):
                  f'text-anchor="middle">{name}</text>')
     s.append('</svg>')
     return ''.join(s)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 第4回 M2：平行四辺形ABCD（AF:FD＝m:n、G＝AC∩FB、H＝EC∩FB、EはAB上）
+# ══════════════════════════════════════════════════════════════════
+def _ix(p1, p2, p3, p4):
+    """直線p1p2と直線p3p4の交点。"""
+    (x1, y1), (x2, y2), (x3, y3), (x4, y4) = p1, p2, p3, p4
+    d = (x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3)
+    t = ((x3 - x1) * (y4 - y3) - (y3 - y1) * (x4 - x3)) / d
+    return (x1 + t * (x2 - x1), y1 + t * (y2 - y1))
+
+
+def para_svg(m: int, n: int, W=250, H=118, sx=52, pad=20) -> str:
+    """平行四辺形ABCD。AD上のFをAF:FD＝m:nにとり、AC・FB・ECを引く。"""
+    A = (pad, pad)
+    D = (pad + W, pad)
+    B = (pad + sx, pad + H)
+    C = (pad + sx + W, pad + H)
+    F = (A[0] + (D[0] - A[0]) * m / (m + n), A[1])
+    G = _ix(A, C, F, B)
+    u = m / (m + n)                          # FBを F→B に進んだ割合（H の位置）
+    H_ = (F[0] + u * (B[0] - F[0]), F[1] + u * (B[1] - F[1]))
+    E = _ix(C, H_, A, B)
+    Wp, Hp = W + sx + pad * 2, H + pad * 2 + 6
+
+    def ln(p, q, w=LW2):
+        return (f'<line x1="{p[0]:.2f}" y1="{p[1]:.2f}" x2="{q[0]:.2f}" y2="{q[1]:.2f}" '
+                f'stroke="#111" stroke-width="{w}"/>')
+
+    def tx(p, t, dx, dy):
+        return (f'<text x="{p[0]+dx:.2f}" y="{p[1]+dy:.2f}" font-size="{FS}" '
+                f'text-anchor="middle" fill="#111">{t}</text>')
+
+    o = [f'<svg viewBox="0 0 {Wp} {Hp}" xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    for p, q in ((A, D), (D, C), (C, B), (B, A)):
+        o.append(ln(p, q, LW))
+    o += [ln(A, C), ln(F, B), ln(E, C)]
+    o.append(tx(A, 'A', -9, 2))
+    o.append(tx(D, 'D', 9, 2))
+    o.append(tx(F, 'F', 0, -5))
+    o.append(tx(B, 'B', -4, 12))
+    o.append(tx(C, 'C', 9, 4))
+    o.append(tx(E, 'E', -10, 3))
+    o.append(tx(G, 'G', -3, -5))
+    o.append(tx(H_, 'H', -9, 2))
+    o.append('</svg>')
+    return ''.join(o)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 第4回 M3：長方形PQRSを対角線PRとジグザグで3k+1個の三角形に分ける
+# ══════════════════════════════════════════════════════════════════
+KANA = list('アイウエオカキクケコサシスセソタチツテト')
+
+
+def rect3_parts(k: int):
+    """対角線上の点の位置a[]、辺QR上の点x[]、三角形（頂点名のタプル）の並びを返す。"""
+    from fractions import Fraction as F
+    t = F(1, 4 * k)
+    a = [F(1, 2 * k)]
+    x = []
+    for _ in range(k - 1):
+        x.append((x[-1] if x else F(0)) + 2 * t / (1 - a[-1]))
+        a.append(a[-1] + 2 * t / (1 - x[-1]))
+    tris = [('P', 'B0', 'V1')]
+    for i in range(1, k):
+        tris.append((f'B{i-1}', f'B{i}', f'V{i}'))
+        tris.append((f'V{i}', f'B{i}', f'V{i+1}'))
+    tris.append((f'B{k-1}', f'B{k}', f'V{k}'))
+    tris.append((f'V{k}', f'B{k}', 'S'))
+    for j in range(k - 1, 0, -1):
+        tris.append((f'V{j}', f'V{j+1}', 'S'))
+    tris.append(('P', 'V1', 'S'))
+    return a, x, tris
+
+
+def rect3_svg(k: int, W=330, H=150, pad=20) -> str:
+    a, x, tris = rect3_parts(k)
+    P, S = (pad, pad), (pad + W, pad)
+    Q, R = (pad, pad + H), (pad + W, pad + H)
+    pts = {'P': P, 'S': S, 'B0': Q, f'B{k}': R}
+    for i, ai in enumerate(a, 1):
+        pts[f'V{i}'] = (pad + W * float(ai), pad + H * float(ai))
+    for i, xi in enumerate(x, 1):
+        pts[f'B{i}'] = (pad + W * float(xi), pad + H)
+    Wp, Hp = W + pad * 2, H + pad * 2
+
+    def ln(p, q, w=LW2):
+        return (f'<line x1="{p[0]:.2f}" y1="{p[1]:.2f}" x2="{q[0]:.2f}" y2="{q[1]:.2f}" '
+                f'stroke="#111" stroke-width="{w}"/>')
+
+    o = [f'<svg viewBox="0 0 {Wp} {Hp}" xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    o.append(f'<rect x="{pad}" y="{pad}" width="{W}" height="{H}" fill="none" '
+             f'stroke="#111" stroke-width="{LW}"/>')
+    o.append(ln(P, R))
+    for i in range(1, k + 1):
+        o.append(ln(S, pts[f'V{i}']))
+    o.append(ln(Q, pts['V1']))
+    for i in range(1, k):
+        o.append(ln(pts[f'V{i}'], pts[f'B{i}']))
+        o.append(ln(pts[f'B{i}'], pts[f'V{i+1}']))
+    for idx, tri in enumerate(tris):
+        cx = sum(pts[v][0] for v in tri) / 3
+        cy = sum(pts[v][1] for v in tri) / 3
+        o.append(f'<text x="{cx:.2f}" y="{cy+4:.2f}" font-size="{FS}" '
+                 f'text-anchor="middle" fill="#111">{KANA[idx]}</text>')
+    for nm, p, dx, dy in (('P', P, -9, 0), ('S', S, 9, 0),
+                          ('Q', Q, -9, 10), ('R', R, 9, 10)):
+        o.append(f'<text x="{p[0]+dx:.2f}" y="{p[1]+dy:.2f}" font-size="{FS}" '
+                 f'text-anchor="middle" fill="#111">{nm}</text>')
+    o.append('</svg>')
+    return ''.join(o)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 第4回 M4：円周上を反対方向に進む2点（出発点は上）
+# ══════════════════════════════════════════════════════════════════
+def meet_svg(start='P', R=72, pad=30) -> str:
+    cx, cy = R + pad, R + pad + 6
+    W, H = (R + pad) * 2, (R + pad) * 2 + 6
+    o = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    o.append(f'<circle cx="{cx}" cy="{cy}" r="{R}" fill="none" stroke="#111" '
+             f'stroke-width="{LW}"/>')
+    o.append(f'<circle cx="{cx}" cy="{cy-R}" r="2.6" fill="#111"/>')
+    o.append(f'<text x="{cx}" y="{cy-R-8}" font-size="{FS}" text-anchor="middle" '
+             f'fill="#111">{start}</text>')
+    # 上端から左右へ出る矢印（右＝時計回りのA、左＝反時計回りのB）
+    for sgn, nm in ((1, 'A'), (-1, 'B')):
+        x0, x1 = cx + sgn * 12, cx + sgn * 40
+        y = cy - R - 2
+        o.append(f'<line x1="{x0}" y1="{y}" x2="{x1}" y2="{y}" stroke="#111" '
+                 f'stroke-width="{LW2}"/>')
+        o.append(f'<path d="M {x1} {y} L {x1-sgn*6} {y-3.5} L {x1-sgn*6} {y+3.5} Z" '
+                 f'fill="#111"/>')
+        o.append(f'<text x="{x1+sgn*9}" y="{y+4}" font-size="{FS}" '
+                 f'text-anchor="middle" fill="#111">{nm}</text>')
+    o.append('</svg>')
+    return ''.join(o)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 第4回 M5：円形に並べたカードの位置（上に1、時計回りにA、B、…）
+# ══════════════════════════════════════════════════════════════════
+def ring_svg(n: int, labeled: bool, R=66, r=13, pad=18) -> str:
+    cx, cy = R + r + pad, R + r + pad
+    W = H = (R + r + pad) * 2
+    o = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    for i in range(n):
+        th = -math.pi / 2 + 2 * math.pi * i / n
+        x, y = cx + R * math.cos(th), cy + R * math.sin(th)
+        o.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{r}" fill="#fff" '
+                 f'stroke="#111" stroke-width="{LW2}"/>')
+        t = '1' if i == 0 else (chr(ord('A') + i - 1) if labeled else '')
+        if t:
+            o.append(f'<text x="{x:.2f}" y="{y+4:.2f}" font-size="{FS}" '
+                     f'text-anchor="middle" fill="#111">{t}</text>')
+    o.append('</svg>')
+    return ''.join(o)

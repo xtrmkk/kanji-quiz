@@ -24,14 +24,16 @@ import nnop3_data as D3        # noqa: E402
 import nnop3_verify as V3      # noqa: E402
 import nnop4_data as D4        # noqa: E402
 import nnop4_verify as V4      # noqa: E402
+import nnop5_data as D5        # noqa: E402
+import nnop5_verify as V5      # noqa: E402
 import nnop_fig as G           # noqa: E402
 
-ROUND_NAME = {1: '第1回', 2: '第2回', 3: '第3回', 'N': '夏期そっくり'}
-ROUND_ORDER = [1, 2, 3, 'N']
+ROUND_NAME = {1: '第1回', 2: '第2回', 3: '第3回', 'N': '夏期そっくり', 4: '第4回'}
+ROUND_ORDER = [1, 2, 3, 'N', 4]
 
-ALL_GROUPS = D.GROUPS + D2.GROUPS2 + D3.GROUPS3 + D4.GROUPS4
-ALL_VARIANTS = {**D.VARIANTS, **D2.VARIANTS2, **D3.VARIANTS3, **D4.VARIANTS4}
-ALL_WORK = {**D.WORK_MM, **D2.WORK_MM2, **D3.WORK_MM3, **D4.WORK_MM4}
+ALL_GROUPS = D.GROUPS + D2.GROUPS2 + D3.GROUPS3 + D4.GROUPS4 + D5.GROUPS5
+ALL_VARIANTS = {**D.VARIANTS, **D2.VARIANTS2, **D3.VARIANTS3, **D4.VARIANTS4, **D5.VARIANTS5}
+ALL_WORK = {**D.WORK_MM, **D2.WORK_MM2, **D3.WORK_MM3, **D4.WORK_MM4, **D5.WORK_MM5}
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -224,7 +226,7 @@ def regression(all_vs):
 # ══════════════════════════════════════════════════════════════════
 def build():
     all_vs = {g['key']: ALL_VARIANTS[g['key']]() for g in ALL_GROUPS}
-    verify = {**VERIFY, **V2.VERIFY2, **V3.VERIFY3, **V4.VERIFY4}
+    verify = {**VERIFY, **V2.VERIFY2, **V3.VERIFY3, **V4.VERIFY4, **V5.VERIFY5}
 
     print('― 独立検算 ―')
     for g in ALL_GROUPS:
@@ -236,6 +238,7 @@ def build():
     print(f'  第2回 {regression2(all_vs)} 大問すべて一致')
     print(f'  第3回 {regression_of(all_vs, V3.OFFICIAL3)} 大問すべて一致')
     print(f'  夏期　 {regression_of(all_vs, V4.OFFICIAL4)} 大問すべて一致')
+    print(f'  第4回 {regression_of(all_vs, V5.OFFICIAL5)} 大問すべて一致')
 
     # 図
     figs = {}
@@ -255,6 +258,17 @@ def build():
     for v in all_vs['N5']:
         figs[f'circ:{v["p"]["W"]}'] = G.circ_svg(v['p']['W'])
         figs[f'tri345:{v["p"]["pq"]}'] = G.tri345_svg(v['p']['p'], v['p']['q'])
+    # 第4回
+    for v in all_vs['M2']:
+        figs[f'para:{v["p"]["mn"]}'] = G.para_svg(v['p']['m'], v['p']['n'])
+    for v in all_vs['M3']:
+        figs[f'rect3:{v["p"]["k"]}'] = G.rect3_svg(v['p']['k'])
+    figs['meet:P'] = G.meet_svg('P')
+    figs['meet:Q'] = G.meet_svg('Q')
+    for v in all_vs['M5']:
+        figs[f'ringL:{v["p"]["n1"]}'] = G.ring_svg(v['p']['n1'], True)
+        for n in (v['p']['n2'], v['p']['n3']):
+            figs[f'ring:{n}'] = G.ring_svg(n, False)
 
     # 内部用のキー（_chk / _pqr）は出力しない
     out_vs = {k: [{'p': v['p'], 'a': v['a']} for v in vs] for k, vs in all_vs.items()}

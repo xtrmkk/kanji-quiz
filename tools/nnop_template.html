@@ -459,7 +459,7 @@ function groupEl(x, idx, lo, hi){
       const a = v.a[used++] || '';
       const plain = a.replace(/<[^>]*>/g, '');
       const wide = plain.length > 18 ? ' full' : plain.length > 7 ? ' wide' : '';
-      h += `<span class="ai">${lab ? lab : ''}`
+      h += `<span class="ai">${lab ? fill(lab, p) : ''}`
          + `<span class="al${wide}" data-a="${esc(a)}"></span></span>`;
     });
     h += '</div>';

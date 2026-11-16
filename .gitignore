@@ -12,3 +12,8 @@ quiz_rika.html
 rika_src.html
 rika_gen.py
 static/
+
+# 答案画像（個人情報）と原本PDF置き場。公開しない
+NN TEST/
+# 図の切り出し作業用（84MB・画像を埋めこんだ作業ファイル）
+crop_tool.html
