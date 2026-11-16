@@ -20,11 +20,18 @@ sys.path.insert(0, HERE)
 import nnop_data as D          # noqa: E402
 import nnop2_data as D2        # noqa: E402
 import nnop2_verify as V2      # noqa: E402
+import nnop3_data as D3        # noqa: E402
+import nnop3_verify as V3      # noqa: E402
+import nnop4_data as D4        # noqa: E402
+import nnop4_verify as V4      # noqa: E402
 import nnop_fig as G           # noqa: E402
 
-ALL_GROUPS = D.GROUPS + D2.GROUPS2
-ALL_VARIANTS = {**D.VARIANTS, **D2.VARIANTS2}
-ALL_WORK = {**D.WORK_MM, **D2.WORK_MM2}
+ROUND_NAME = {1: '第1回', 2: '第2回', 3: '第3回', 'N': '夏期そっくり'}
+ROUND_ORDER = [1, 2, 3, 'N']
+
+ALL_GROUPS = D.GROUPS + D2.GROUPS2 + D3.GROUPS3 + D4.GROUPS4
+ALL_VARIANTS = {**D.VARIANTS, **D2.VARIANTS2, **D3.VARIANTS3, **D4.VARIANTS4}
+ALL_WORK = {**D.WORK_MM, **D2.WORK_MM2, **D3.WORK_MM3, **D4.WORK_MM4}
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -190,6 +197,18 @@ def regression2(all_vs):
     return len(V2.OFFICIAL2)
 
 
+def regression_of(all_vs, official):
+    """元の数値を入れた候補をさがし、公式解答と突き合わせる。"""
+    for key, (ans, params) in official.items():
+        hit = [v for v in all_vs[key]
+               if all(str(v['p'].get(k)) == str(x) for k, x in params.items())]
+        assert hit, f'{key}: 元の数値の候補が無い {params}'
+        ok = [v for v in hit
+              if all(a is None or a == b for a, b in zip(ans, v['a']))]
+        assert ok, (f'{key}: 公式解答と一致しない\n  期待 {ans}\n  実際 {hit[0]["a"]}')
+    return len(official)
+
+
 def regression(all_vs):
     for key, (ans, params) in OFFICIAL.items():
         hit = [v for v in all_vs[key]
@@ -205,16 +224,18 @@ def regression(all_vs):
 # ══════════════════════════════════════════════════════════════════
 def build():
     all_vs = {g['key']: ALL_VARIANTS[g['key']]() for g in ALL_GROUPS}
-    verify = {**VERIFY, **V2.VERIFY2}
+    verify = {**VERIFY, **V2.VERIFY2, **V3.VERIFY3, **V4.VERIFY4}
 
     print('― 独立検算 ―')
     for g in ALL_GROUPS:
         n = verify[g['key']](all_vs[g['key']])
-        print(f'  第{g["round"]}回 {g["key"]:4} {g["title"]:18} {n:4}通り OK')
+        print(f'  {ROUND_NAME[g["round"]]:6} {g["key"]:4} {g["title"]:18} {n:4}通り OK')
 
     print('― 回帰テスト（公式解答との照合）―')
     print(f'  第1回 {regression(all_vs)} 大問すべて一致')
     print(f'  第2回 {regression2(all_vs)} 大問すべて一致')
+    print(f'  第3回 {regression_of(all_vs, V3.OFFICIAL3)} 大問すべて一致')
+    print(f'  夏期　 {regression_of(all_vs, V4.OFFICIAL4)} 大問すべて一致')
 
     # 図
     figs = {}
@@ -226,13 +247,24 @@ def build():
     figs['tri2'] = G.tri2_svg()
     figs['tri_front'] = G.tri_row_svg('front')
     figs['tri_back'] = G.tri_row_svg('back')
+    figs['pond'] = G.pond_svg()
+    figs['rect'] = G.rect_svg()
+    figs['roll'] = G.roll_svg()
+    for v in all_vs['N3']:
+        figs[f'tri6:{v["p"]["L"]}'] = G.tri6_svg(v['p']['L'])
+    for v in all_vs['N5']:
+        figs[f'circ:{v["p"]["W"]}'] = G.circ_svg(v['p']['W'])
+        figs[f'tri345:{v["p"]["pq"]}'] = G.tri345_svg(v['p']['p'], v['p']['q'])
 
     # 内部用のキー（_chk / _pqr）は出力しない
     out_vs = {k: [{'p': v['p'], 'a': v['a']} for v in vs] for k, vs in all_vs.items()}
     groups = [{k: g[k] for k in g if k != 'vary'} for g in ALL_GROUPS]
 
-    rounds = sorted({g['round'] for g in ALL_GROUPS})
+    have = {g['round'] for g in ALL_GROUPS}
+    rounds = [r for r in ROUND_ORDER if r in have]
     data = ('const ROUNDS='   + json.dumps(rounds) + ';\n'
+            'const ROUNDNAME=' + json.dumps({str(k): v for k, v in ROUND_NAME.items()},
+                                            ensure_ascii=False) + ';\n'
             'const FIELDS='   + json.dumps(D.FIELDS, ensure_ascii=False) + ';\n'
             'const FIELDNAME=' + json.dumps(dict(D.FIELDS), ensure_ascii=False) + ';\n'
             'const GROUPS='   + json.dumps(groups, ensure_ascii=False) + ';\n'

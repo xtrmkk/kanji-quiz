@@ -263,3 +263,225 @@ def tri2_svg(W=300, H=235, pad=22):
                  f'font-size="{FS}" text-anchor="middle">{name}</text>')
     s.append('</svg>')
     return ''.join(s)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 第3回の図
+# ══════════════════════════════════════════════════════════════════
+def pond_svg(W=200, H=215, R=68):
+    """円形の池と出発地点P、時計回りの矢印（第3回・大問2）"""
+    cx, cy = W / 2, H - R - 16
+    s = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    s.append(f'<circle cx="{cx}" cy="{cy}" r="{R}" fill="none" stroke="#111" '
+             f'stroke-width="{LW}"/>')
+    px, py = cx, cy - R
+    s.append(f'<circle cx="{px}" cy="{py}" r="2.6" fill="#111"/>')
+    s.append(f'<text x="{px-8}" y="{py-2}" font-size="{FS}" text-anchor="end">地点P</text>')
+    # A・B・Cの印（Pの真上に縦に並べる）
+    for i, nm in enumerate('ABC'):
+        s.append(f'<text x="{px-14}" y="{py-40+i*13}" font-size="{FS}" '
+                 f'text-anchor="middle">{nm}</text>')
+    s.append(f'<line x1="{px-6}" y1="{py-52}" x2="{px-6}" y2="{py-4}" '
+             f'stroke="#111" stroke-width="0.9"/>')
+    # 時計回りの矢印
+    s.append(f'<path d="M {px+10},{py-30} q 34,-6 44,22" fill="none" stroke="#111" '
+             f'stroke-width="1.1"/>')
+    s.append(f'<path d="M {px+52},{py-14} l 3,10 l -9,-4 z" fill="#111"/>')
+    s.append('</svg>')
+    return ''.join(s)
+
+
+def rect_svg(W=250, H=180, pad=18):
+    """長方形ABCDと四角形EBFD（第3回・大問3）"""
+    x0, y0 = pad + 10, pad
+    x1, y1 = W - pad - 14, H - pad - 12
+    A, Dp, C, Bp = (x0, y0), (x1, y0), (x1, y1), (x0, y1)
+    E = (x0 + (x1 - x0) * 0.80, y0)
+    Fp = (x1, y0 + (y1 - y0) * 0.30)
+    P = lambda p: f'{p[0]:.1f},{p[1]:.1f}'
+    ln = lambda a, b, w=LW2: (f'<line x1="{a[0]:.1f}" y1="{a[1]:.1f}" x2="{b[0]:.1f}" '
+                              f'y2="{b[1]:.1f}" stroke="#111" stroke-width="{w}"/>')
+    s = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    s.append(f'<polygon points="{P(A)} {P(Dp)} {P(C)} {P(Bp)}" fill="none" '
+             f'stroke="#111" stroke-width="{LW}"/>')
+    for a, b in ((Bp, E), (Bp, Fp), (Bp, Dp)):
+        s.append(ln(Bp, b, 0.95 if b is Dp else LW2))
+    for name, p, dx, dy in (('A', A, -8, -3), ('D', Dp, 9, -3), ('C', C, 9, 12),
+                            ('B', Bp, -8, 13), ('E', E, -2, -4), ('F', Fp, 10, 4)):
+        s.append(f'<text x="{p[0]+dx:.1f}" y="{p[1]+dy:.1f}" font-size="{FS}" '
+                 f'text-anchor="middle">{name}</text>')
+    s.append('</svg>')
+    return ''.join(s)
+
+
+def roll_svg(W=210, H=190, side=96):
+    """正方形の上にのった正三角形と、転がる向きの矢印（第3回・大問5）"""
+    x0 = (W - side) / 2
+    y1 = H - 16
+    y0 = y1 - side
+    h = side / 2 * math.sqrt(3) / 2 * 2 / 2 * 2      # 正三角形の高さ（1辺 side/2）
+    t = side / 2
+    h = t * math.sqrt(3) / 2
+    A, C = (x0, y0), (x0 + t, y0)
+    Bp = (x0 + t / 2, y0 - h)
+    s = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    s.append(f'<rect x="{x0}" y="{y0}" width="{side}" height="{side}" fill="none" '
+             f'stroke="#111" stroke-width="{LW}"/>')
+    s.append(f'<polygon points="{A[0]:.1f},{A[1]:.1f} {Bp[0]:.1f},{Bp[1]:.1f} '
+             f'{C[0]:.1f},{C[1]:.1f}" fill="none" stroke="#111" stroke-width="{LW}"/>')
+    for name, p, dx, dy in (('A', A, -9, 4), ('B', Bp, -1, -5), ('C', C, 10, 4)):
+        s.append(f'<text x="{p[0]+dx:.1f}" y="{p[1]+dy:.1f}" font-size="{FS}" '
+                 f'text-anchor="middle">{name}</text>')
+    ax = x0 + t + 6
+    s.append(f'<path d="M {ax},{y0-h-6} q 26,-9 40,8" fill="none" stroke="#111" '
+             f'stroke-width="1.1"/>')
+    s.append(f'<path d="M {ax+40},{y0-h+2} l 1.5,-10 l -8,5 z" fill="#111"/>')
+    s.append('</svg>')
+    return ''.join(s)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 夏期そっくりテストの図
+# ══════════════════════════════════════════════════════════════════
+def tri6_svg(L=8, W=520, pad=26):
+    """直角三角形ABCを6つに分けた図（そっくり・大問3）。●はすべて同じ長さ。"""
+    th = math.radians(15)
+    cx = L / math.tan(th)
+    sc = (W - pad * 2 - 26) / cx
+    H = int(L * sc) + pad * 2 + 10
+    X = lambda u: pad + 20 + u * sc
+    Y = lambda u: H - pad - u * sc
+    A, B, C = (0, L), (0, 0), (cx, 0)
+    U1, V1 = (L / 2, L * math.sqrt(3) / 2), (L, 0)
+    U2 = (L + L * math.sqrt(3) / 2, L / 2)
+    V2 = (L + L * math.sqrt(3), 0)
+    Wp = (L, L - L * math.tan(th))
+    P = lambda p: f'{X(p[0]):.1f},{Y(p[1]):.1f}'
+    ln = lambda a, b, w=LW2: (f'<line x1="{X(a[0]):.1f}" y1="{Y(a[1]):.1f}" '
+                              f'x2="{X(b[0]):.1f}" y2="{Y(b[1]):.1f}" '
+                              f'stroke="#111" stroke-width="{w}"/>')
+    s = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    s.append(f'<polygon points="{P(A)} {P(B)} {P(C)}" fill="none" stroke="#111" '
+             f'stroke-width="{LW}"/>')
+    for a, b in ((B, U1), (U1, V1), (V1, Wp), (V1, U2), (U2, V2)):
+        s.append(ln(a, b))
+    # 直角の印（BとV1）
+    for base in (B, V1):
+        x, y = X(base[0]), Y(base[1])
+        s.append(f'<path d="M {x+8:.1f},{y:.1f} L {x+8:.1f},{y-8:.1f} '
+                 f'L {x:.1f},{y-8:.1f}" fill="none" stroke="#111" stroke-width="0.8"/>')
+    # ●（長さが等しい辺の印）
+    for a, b in ((A, B), (B, U1), (U1, V1), (B, V1), (V1, U2), (U2, V2), (V2, C)):
+        mx, my = (X(a[0]) + X(b[0])) / 2, (Y(a[1]) + Y(b[1])) / 2
+        s.append(f'<circle cx="{mx:.1f}" cy="{my:.1f}" r="2.8" fill="#111"/>')
+    # 記号
+    lab = ((('ア'), (A, B, U1)), (('イ'), (B, U1, V1)), (('ウ'), (U1, Wp, V1)),
+           (('エ'), (Wp, V1, U2)), (('オ'), (V1, U2, V2)), (('カ'), (U2, V2, C)))
+    for name, tri in lab:
+        gx = sum(X(p[0]) for p in tri) / 3
+        gy = sum(Y(p[1]) for p in tri) / 3
+        s.append(f'<text x="{gx:.1f}" y="{gy+4:.1f}" font-size="{FS}" '
+                 f'text-anchor="middle">{name}</text>')
+    for name, p, dx, dy in (('A', A, -4, -6), ('B', B, -6, 14), ('C', C, 10, 12)):
+        s.append(f'<text x="{X(p[0])+dx:.1f}" y="{Y(p[1])+dy:.1f}" font-size="{FS}" '
+                 f'text-anchor="middle">{name}</text>')
+    # 8cm（ABの長さ）
+    s.append(f'<text x="{X(0)-14:.1f}" y="{(Y(0)+Y(L))/2+4:.1f}" font-size="{FS}" '
+             f'text-anchor="middle">{L}cm</text>')
+    s.append('</svg>')
+    return ''.join(s)
+
+
+def circ_svg(Wmm=12, W=300, H=276, pad=16):
+    """PQを直径とする円とD・E・F・G（そっくり・大問5 図2）。HI＝Wmm cm。"""
+    h, i = 60.0, 85.0                      # OH, OI（図は正確でなくてよい）
+    d, f = i, h                            # DH＝OI、FI＝OH
+    R = math.hypot(h, d)
+    sc = min(W - pad * 2 - 26, H - pad * 2) / (2 * R)
+    cx, cy = W / 2, H / 2
+    X = lambda u: cx + u * sc
+    Y = lambda u: cy - u * sc
+    Dp, E, Fp, G = (-h, d), (-h, -d), (i, f), (i, -f)
+    Pp, Q = (-R, 0), (R, 0)
+    s = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    # 斜線部分（弓形2つ）
+    for sgn, xv in ((-1, -h), (1, i)):
+        yy = math.sqrt(max(R * R - xv * xv, 0))
+        big = 0
+        if sgn < 0:
+            dd = (f'M {X(xv):.1f},{Y(yy):.1f} A {R*sc:.1f} {R*sc:.1f} 0 {big} 0 '
+                  f'{X(xv):.1f},{Y(-yy):.1f} Z')
+        else:
+            dd = (f'M {X(xv):.1f},{Y(yy):.1f} A {R*sc:.1f} {R*sc:.1f} 0 {big} 1 '
+                  f'{X(xv):.1f},{Y(-yy):.1f} Z')
+        s.append(f'<path d="{dd}" fill="{SHADE}" stroke="none"/>')
+    s.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{R*sc:.1f}" fill="none" '
+             f'stroke="#111" stroke-width="{LW}"/>')
+    ln = lambda a, b, w=LW2, extra='': (
+        f'<line x1="{X(a[0]):.1f}" y1="{Y(a[1]):.1f}" x2="{X(b[0]):.1f}" '
+        f'y2="{Y(b[1]):.1f}" stroke="#111" stroke-width="{w}" {extra}/>')
+    s.append(ln(Pp, Q, LW))
+    s.append(ln(Dp, E, LW))
+    s.append(ln(Fp, G, LW))
+    s.append(ln(Dp, G, 0.85, 'stroke-dasharray="4,3"'))
+    s.append(ln(E, Fp, 0.85, 'stroke-dasharray="4,3"'))
+    # 直角の印（2本の点線の交点）と直角の印（HとI）
+    mx = (i - h) / 2
+    px, py = X(mx), Y(0)
+    t = 9.0 / math.sqrt(2)
+    s.append(f'<path d="M {px-t:.1f},{py-t:.1f} L {px:.1f},{py-2*t:.1f} '
+             f'L {px+t:.1f},{py-t:.1f} L {px:.1f},{py:.1f} Z" '
+             f'fill="none" stroke="#111" stroke-width="0.8"/>')
+    for xv, sgn in ((-h, 1), (i, -1)):
+        x, y = X(xv), Y(0)
+        s.append(f'<path d="M {x+sgn*9:.1f},{y:.1f} L {x+sgn*9:.1f},{y-9:.1f} '
+                 f'L {x:.1f},{y-9:.1f}" fill="none" stroke="#111" stroke-width="0.8"/>')
+    s.append(f'<circle cx="{X(0):.1f}" cy="{Y(0):.1f}" r="2.4" fill="#111"/>')
+    for name, p, dx, dy in (('P', Pp, -10, 4), ('Q', Q, 10, 4), ('O', (0, 0), -4, 14),
+                            ('H', (-h, 0), -9, -5), ('I', (i, 0), 9, -5),
+                            ('D', Dp, -4, -6), ('E', E, -4, 15),
+                            ('F', Fp, 7, -5), ('G', G, 7, 14)):
+        s.append(f'<text x="{X(p[0])+dx:.1f}" y="{Y(p[1])+dy:.1f}" font-size="{FS}" '
+                 f'text-anchor="middle">{name}</text>')
+    # HI の寸法線
+    yd = Y(0) + 30
+    s.append(f'<line x1="{X(-h):.1f}" y1="{yd:.1f}" x2="{X(i):.1f}" y2="{yd:.1f}" '
+             f'stroke="#111" stroke-width="0.8"/>')
+    for xv, sgn in ((-h, 1), (i, -1)):
+        s.append(f'<path d="M {X(xv):.1f},{yd:.1f} l {sgn*7},-3 l 0,6 z" fill="#111"/>')
+    s.append(f'<rect x="{(X(-h)+X(i))/2-17:.1f}" y="{yd-8:.1f}" width="34" height="14" '
+             f'fill="#fff"/>')
+    s.append(f'<text x="{(X(-h)+X(i))/2:.1f}" y="{yd+4:.1f}" font-size="{FS}" '
+             f'text-anchor="middle">{Wmm}cm</text>')
+    s.append('</svg>')
+    return ''.join(s)
+
+
+def tri345_svg(p=3, q=4, W=210, H=140, pad=18):
+    """合同な直角三角形2枚（そっくり・大問5 図1）"""
+    sc = (W - pad * 2) / (p + q)
+    sc = min(sc, (H - pad * 2) / max(p, q))
+    x0 = pad + p * sc
+    y0 = H - pad
+    X = lambda u: x0 + u * sc
+    Y = lambda u: y0 - u * sc
+    A, B, C = (-p, q), (0, 0), (q, p)
+    P1, Q1 = (-p, 0), (q, 0)
+    s = [f'<svg viewBox="0 0 {W} {H}" xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    pts = lambda *ps: ' '.join(f'{X(a[0]):.1f},{Y(a[1]):.1f}' for a in ps)
+    s.append(f'<polygon points="{pts(P1, A, B)}" fill="none" stroke="#111" '
+             f'stroke-width="{LW}"/>')
+    s.append(f'<polygon points="{pts(Q1, C, B)}" fill="none" stroke="#111" '
+             f'stroke-width="{LW}"/>')
+    s.append(f'<line x1="{X(A[0]):.1f}" y1="{Y(A[1]):.1f}" x2="{X(C[0]):.1f}" '
+             f'y2="{Y(C[1]):.1f}" stroke="#111" stroke-width="0.85" '
+             f'stroke-dasharray="4,3"/>')
+    for base, sgn in ((P1, 1), (Q1, -1)):
+        x, y = X(base[0]), Y(base[1])
+        s.append(f'<path d="M {x+sgn*8:.1f},{y:.1f} L {x+sgn*8:.1f},{y-8:.1f} '
+                 f'L {x:.1f},{y-8:.1f}" fill="none" stroke="#111" stroke-width="0.8"/>')
+    for name, pt, dx, dy in (('A', A, -8, -3), ('B', B, 0, 14), ('C', C, 9, -3)):
+        s.append(f'<text x="{X(pt[0])+dx:.1f}" y="{Y(pt[1])+dy:.1f}" font-size="{FS}" '
+                 f'text-anchor="middle">{name}</text>')
+    s.append('</svg>')
+    return ''.join(s)

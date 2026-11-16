@@ -4,6 +4,8 @@ from datetime import datetime
 from kanji_quiz_gen import generate_pdf
 
 app = Flask(__name__)
+# テンプレート（ビルド生成物）を書き換えたら、再起動なしで反映させる
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 
 @app.route('/')

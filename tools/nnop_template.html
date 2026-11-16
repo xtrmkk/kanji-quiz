@@ -92,6 +92,19 @@ body.a4{--paperw:210mm;--paperh:297mm;--mgv:16mm;--mgh:14mm;
        color:#9b2c3c;white-space:nowrap}
 .rate{font-size:calc(var(--fs)*.76);color:#aaa}
 .g-intro{font-size:var(--fs);line-height:1.68;text-align:justify}
+.box{border:1px solid #777;padding:3px 7px;margin:5px 0;font-size:var(--fs);line-height:1.6}
+/* 循環小数の点 */
+.dt{position:relative;display:inline-block}
+.dt::before{content:'';position:absolute;left:50%;top:-.40em;width:2.3px;height:2.3px;
+  border-radius:50%;background:currentColor;transform:translateX(-50%)}
+/* 分母13の表 */
+.tbl.wrap{white-space:normal}
+.t13{border-collapse:collapse;margin:6px auto 2px;font-size:calc(var(--fs)*.88)}
+.t13 td{border:1px solid #999;padding:2px 6px;white-space:nowrap;text-align:center}
+.t13 .eq{margin:0 .35em}
+.tbl{border-left:2px solid #999;padding:2px 0 2px 8px;margin:6px 0;
+     font-size:calc(var(--fs)*.94);line-height:1.55;white-space:nowrap;
+     overflow:hidden;text-overflow:clip}
 .formula{font-size:calc(var(--fs)*1.3);text-align:center;margin:9px 0 5px}
 .bx{display:inline-block;min-width:calc(34mm*var(--sc));height:calc(10mm*var(--sc));
     border:1px solid #333;margin:0 3px;vertical-align:-3px}
@@ -291,7 +304,7 @@ function buildRounds(){
   ROUNDS.forEach(r => {
     const b = document.createElement('button');
     b.className = 'ftag' + (selR.has(r) ? ' on' : '');
-    b.textContent = '第' + r + '回';
+    b.textContent = ROUNDNAME[r] || ('第' + r + '回');
     b.onclick = () => {
       if(selR.has(r)){ if(selR.size > 1) selR.delete(r); } else { selR.add(r); }
       buildRounds(); refresh();
@@ -341,7 +354,7 @@ function refresh(){
   box.innerHTML = n === 0
     ? '<b>該当する大問がありません。</b>分野か正答率の条件をゆるめてください。'
     : `該当 <b>${n}</b> 大問（設問 ${nsub} 問・満点 ${pt} 点）<br>` +
-      e.map(x => `<span class="po">第${x.g.round}回</span>${x.g.title}：`
+      e.map(x => `<span class="po">${ROUNDNAME[x.g.round]}</span>${x.g.title}：`
                  + `${x.subs.map(s => s.label || `${x.subs.length}問`).join('')}`).join('　/　');
   const cnt = document.getElementById('cnt');
   cnt.max = Math.max(1, n);
@@ -392,8 +405,7 @@ function generate(){
 
 function figHtml(key, p){
   if(!key) return '';
-  const k = (key === 'ogi' || key === 'circle') ? key + ':' + p.a : key;
-  return FIGS[k] || '';
+  return FIGS[fill(key, p)] || '';
 }
 
 function groupEl(x, idx, lo, hi){
@@ -405,7 +417,7 @@ function groupEl(x, idx, lo, hi){
 
   let h = `<div class="g-head"><span class="g-num">${idx + 1}</span>`
         + `<span class="badge">${FIELDNAME[g.field]}</span>`
-        + `<span class="rate">第${g.round}回・${g.title}</span></div>`;
+        + `<span class="rate">${ROUNDNAME[g.round]}・${g.title}</span></div>`;
 
   // 大問の図（右回り込み or 下）
   const gf = figHtml(g.fig, p);
@@ -425,6 +437,7 @@ function groupEl(x, idx, lo, hi){
     h += `<div class="sub${off ? ' off' : ''}">`;
     if(sf && s.figpos === 'right') h += `<span class="fig-r">${sf}</span>`;
     h += `<span class="sub-lab">${s.label}</span>${fill(s.q, p)}`;
+    if(sf && s.figpos === 'bottom') h += `<div class="fig-b">${sf}</div>`;
     // 計算欄（元の問題用紙と同じく、手を動かす枠を置く）
     const wmm = (WORK_MM[s.id] || 30);
     h += `<div class="work" style="height:calc(${wmm}mm * var(--sc))"></div>`;
@@ -515,7 +528,7 @@ function layoutPages(){
     cols = document.createElement('div'); cols.className = 'pcols';
     page.appendChild(cols); qc.appendChild(page);
     nCol = 0; addCol();
-    limit = cols.clientHeight;
+    limit = cols.clientHeight - 4;   // 端数で1〜3px はみ出すことがあるので余裕をみる
   }
   addPage();
   SHEET.forEach((el, i) => {
