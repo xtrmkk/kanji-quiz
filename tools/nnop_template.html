@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NNOP算数ランダムテスト</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Hiragino Mincho ProN','Yu Mincho','MS Mincho',serif;color:#111;
+  background:
+    radial-gradient(760px 420px at 12% -8%, #fdeef0 0%, transparent 60%),
+    radial-gradient(760px 420px at 100% 0%, #eef0ff 0%, transparent 55%),
+    #f2f4f8;
+  min-height:100vh}
+
+/* ── 操作画面 ── */
+.ctrl{max-width:640px;margin:0 auto;padding:36px 18px 48px}
+.app-badge{display:block;width:max-content;margin:0 auto 12px;font-size:11px;font-weight:700;
+  letter-spacing:.08em;color:#b03a4a;background:#fdeef0;padding:5px 13px;border-radius:99px}
+.app-title{font-size:23px;font-weight:800;letter-spacing:-.01em;color:#1a1d29;text-align:center;margin-bottom:4px}
+.app-sub{font-size:13px;color:#6b7280;text-align:center;margin-bottom:24px}
+.card{background:#fff;border-radius:16px;padding:20px;
+  box-shadow:0 1px 2px rgba(16,24,40,.04),0 8px 20px rgba(16,24,40,.05);
+  border:1px solid #eceef2;margin-bottom:14px}
+.card-h{font-size:13px;font-weight:bold;color:#4a5568;margin-bottom:12px;
+  display:flex;align-items:center;gap:6px}
+.card-h::before{content:'';width:4px;height:13px;border-radius:2px;background:#c0455a}
+
+.frow{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:9px}
+.frow:last-child{margin-bottom:0}
+.flabel{font-size:12px;color:#8a94a6;min-width:52px}
+.ftag{padding:5px 12px;border:1px solid #dde1e8;border-radius:99px;font-size:12px;cursor:pointer;
+      background:#fff;color:#5c6270;font-family:inherit;transition:all .13s ease}
+.ftag:hover{border-color:#e4a7b1;color:#b03a4a}
+.ftag.on{background:#c0455a;color:#fff;font-weight:600;border-color:#c0455a;
+  box-shadow:0 2px 6px rgba(192,69,90,.3)}
+.ftag.all{border-color:#c7cbd4;color:#4a5568}
+.ftag.all.on{background:#232637;color:#fff;border-color:#232637}
+
+.row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.row:last-child{margin-bottom:0}
+label{font-size:14px;color:#4a5568;white-space:nowrap;min-width:88px;text-align:left}
+input[type=number]{flex:1;padding:11px 13px;border:1.5px solid #e2e8f0;border-radius:10px;
+                   font-size:17px;font-family:inherit}
+input[type=number]:focus{outline:none;border-color:#e09aa6}
+select{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;
+       font-size:15px;font-family:inherit;background:#fff}
+.chk{display:flex;align-items:center;gap:8px;margin-top:14px;font-size:14px;color:#4a5568}
+.chk input{width:18px;height:18px;accent-color:#c0455a}
+.pool{font-size:12px;color:#718096;margin-top:12px;line-height:1.7}
+.pool b{color:#9b2c3c;font-size:14px}
+.pool .po{color:#b03a4a;font-weight:700;margin-right:.2em}
+.pool.zero b{color:#c53030}
+.btn{width:100%;padding:16px;background:linear-gradient(135deg,#d2566c,#a8324a);color:#fff;
+     border:none;border-radius:14px;font-size:18px;font-weight:700;font-family:inherit;
+     cursor:pointer;box-shadow:0 6px 16px rgba(168,50,74,.26)}
+.btn:hover:not(:disabled){filter:brightness(1.06)}
+.btn:disabled{background:#d8d2d4;box-shadow:none;cursor:not-allowed}
+.info{font-size:12px;color:#a0aec0;margin-top:14px;line-height:1.7;text-align:center}
+.seg{display:inline-flex;background:#eef0f5;border-radius:99px;padding:3px;gap:2px}
+.seg-btn{padding:5px 14px;border:none;border-radius:99px;font-size:12px;cursor:pointer;
+  background:transparent;color:#6b7280;font-family:inherit;font-weight:500}
+.seg-btn.on{background:#c0455a;color:#fff;font-weight:700}
+
+/* ── テストシート ── */
+#sheet{display:none;padding:14px 16px 20px}
+.sh-head{display:flex;justify-content:space-between;align-items:flex-end;
+         border-bottom:2px solid #111;padding-bottom:5px;margin-bottom:9px}
+.sh-title{font-size:15px;font-weight:bold}
+.sh-meta{font-size:10.5px;letter-spacing:.02em}
+
+/* 用紙を実寸で組む。既定はA3（元の問題用紙に合わせたサイズ） */
+body{--pw:273mm;--ph:396mm;--colw:131mm;--gap:11mm;--fs:13.4px;--sc:1}
+body.a4{--pw:192mm;--ph:272mm;--colw:91.5mm;--gap:9mm;--fs:9.4px;--sc:.7}
+#qc{display:flex;flex-direction:column;align-items:center;gap:16px}
+.page{width:var(--pw);height:var(--ph);background:#fff;overflow:hidden;
+      display:flex;flex-direction:column;
+      box-shadow:0 1px 2px rgba(16,24,40,.06),0 8px 22px rgba(16,24,40,.09)}
+.pcols{flex:1;min-height:0;display:flex;gap:var(--gap);
+       background:linear-gradient(#ddd,#ddd) center top/1px 100% no-repeat}
+.pcol{flex:0 0 var(--colw);width:var(--colw);overflow:hidden}
+@media screen and (max-width:1120px){ #qc{zoom:.62}}
+@media screen and (max-width:700px){ #qc{zoom:.38}}
+
+.g{break-inside:avoid;page-break-inside:avoid;display:flow-root;width:100%;
+   padding:7px 0 9px;border-bottom:1px dotted #c8c8c8;margin-bottom:3px}
+.g-head{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.g-num{font-weight:bold;font-size:calc(var(--fs)*1.12)}
+.badge{font-size:calc(var(--fs)*.78);padding:1px 6px;border-radius:4px;background:#f3e7ea;
+       color:#9b2c3c;white-space:nowrap}
+.rate{font-size:calc(var(--fs)*.76);color:#aaa}
+.g-intro{font-size:var(--fs);line-height:1.68;text-align:justify}
+.formula{font-size:calc(var(--fs)*1.3);text-align:center;margin:9px 0 5px}
+.bx{display:inline-block;min-width:calc(34mm*var(--sc));height:calc(10mm*var(--sc));
+    border:1px solid #333;margin:0 3px;vertical-align:-3px}
+
+.sub{margin-top:8px;font-size:var(--fs);line-height:1.68;text-align:justify;clear:both}
+.sub-lab{font-weight:bold;margin-right:.3em}
+.sub.off .sub-lab::after{content:'（誘導）';font-weight:normal;
+    font-size:calc(var(--fs)*.78);color:#999}
+
+/* 計算欄：元の問題用紙と同じく、各小問に手を動かす枠を置く */
+.work{border:1px solid #777;margin-top:5px;clear:both}
+
+/* 解答の枠：元の問題用紙と同じ大きさ（A3で 26mm×17mm） */
+.ans{margin-top:5px;display:flex;flex-wrap:wrap;align-items:flex-end;
+     gap:4px calc(7mm*var(--sc));clear:both}
+.ans-lab{font-size:var(--fs);font-weight:bold;margin-right:.2em}
+.ai{font-size:var(--fs);display:flex;align-items:center;gap:4px;white-space:nowrap}
+.al{display:inline-flex;align-items:center;justify-content:center;
+    width:calc(26mm*var(--sc));height:calc(17mm*var(--sc));
+    border:1px solid #333;text-align:center;
+    font-size:calc(var(--fs)*.92);line-height:1.2;padding:0 1mm;overflow:hidden}
+.al.wide{width:calc(40mm*var(--sc))}
+/* 操作の並びなど、長い答えは幅いっぱいの枠にする */
+.al.full{width:100%;justify-content:flex-start;padding:0 2mm;
+         font-size:calc(var(--fs)*.88)}
+.ans:has(.al.full){display:block}
+.ans:has(.al.full) .ai{display:flex;width:100%;margin-top:3px}
+.al.show{color:#c00}
+.how{display:none;font-size:calc(var(--fs)*.84);line-height:1.6;color:#444;background:#f7f7f9;
+     border-left:2px solid #d8aab3;padding:4px 7px;margin-top:4px}
+.how.show{display:block}
+
+/* 図 */
+.fig-r{float:right;width:36%;max-width:36%;margin:0 0 7px 10px}
+.fig-b{margin:6px 0 4px;clear:both}
+.fig-svg{width:100%;height:auto;display:block}
+.tri-row{display:flex;gap:4px;justify-content:space-between}
+.tri-svg{width:32%;height:auto}
+
+/* 分数 */
+.fr{display:inline-flex;flex-direction:column;vertical-align:-0.42em;text-align:center;
+    line-height:1.05;margin:0 .12em}
+.fn{border-bottom:1px solid currentColor;padding:0 .22em}
+.fd{padding:0 .22em}
+
+.sheet-btns{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+.pbtn,.bbtn,.abtn,.hbtn{padding:11px 22px;color:#fff;border:none;border-radius:10px;
+      font-size:15px;font-weight:600;font-family:inherit;cursor:pointer}
+.pbtn{background:#48bb78}.bbtn{background:#718096}.abtn{background:#dd6b20}
+.hbtn{background:#5a67d8}
+.abtn.on{background:#9c4221}.hbtn.on{background:#3c479e}
+
+@media print{
+  .ctrl,.sheet-btns{display:none!important}
+  #sheet{display:block!important;padding:0}
+  body{background:#fff}
+  #qc{display:block;gap:0;zoom:1}
+  .page{width:auto;height:var(--ph);box-shadow:none;break-after:page;page-break-after:always}
+  .page:last-child{break-after:auto;page-break-after:auto}
+  .al.show{color:#000}
+  /* 問題用紙には載せない：分野・大問名・「（誘導）」 */
+  .badge,.rate{display:none!important}
+  .sub.off .sub-lab::after{content:''!important}
+}
+</style>
+</head>
+<body>
+
+<div class="ctrl" id="ctrl">
+  <span class="app-badge">NN AZABU OPEN · MATH</span>
+  <div class="app-title">NNOP算数ランダムテスト</div>
+  <div class="app-sub">麻布中NNオープン模試の設問を、数値を変えて出題します</div>
+
+  <div class="card">
+    <div class="card-h">出題する回</div>
+    <div id="roundTags"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">分野</div>
+    <div id="fieldTags"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">難しさ（全体正答率）</div>
+    <div class="row">
+      <label for="lo">下限</label>
+      <select id="lo"></select>
+    </div>
+    <div class="row">
+      <label for="hi">上限</label>
+      <select id="hi"></select>
+    </div>
+    <div class="pool" id="pool"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-h">出題</div>
+    <div class="row">
+      <label for="cnt">大問の数</label>
+      <input type="number" id="cnt" value="4" min="1" max="7">
+    </div>
+    <div class="row">
+      <label>用紙</label>
+      <span class="seg" id="paperSeg">
+        <button class="seg-btn on" data-paper="a3" onclick="setPaper('a3')">A3</button>
+        <button class="seg-btn" data-paper="a4" onclick="setPaper('a4')">A4</button>
+      </span>
+    </div>
+    <div class="row">
+      <label>出題順</label>
+      <span class="seg" id="ordSeg">
+        <button class="seg-btn on" data-order="1" onclick="setOrder(true)">番号順</button>
+        <button class="seg-btn" data-order="0" onclick="setOrder(false)">ランダム</button>
+      </span>
+    </div>
+    <div class="chk">
+      <input type="checkbox" id="withans">
+      <label for="withans" style="min-width:auto;cursor:pointer">解答を表示した状態で作成する</label>
+    </div>
+    <div class="chk">
+      <input type="checkbox" id="withhow">
+      <label for="withhow" style="min-width:auto;cursor:pointer">解き方のヒントも載せる</label>
+    </div>
+  </div>
+
+  <button class="btn" id="genBtn" onclick="generate()">テストを作成する</button>
+  <div class="info">※ 数値は毎回変わります（正八角形の大問だけは元の数値のまま）</div>
+</div>
+
+<style id="pageRule">@page{size:A3;margin:12mm}</style>
+<div id="sheet">
+  <div class="sh-head" id="shHead">
+    <span class="sh-title" id="shTitle">NNOP算数テスト</span>
+    <span class="sh-meta">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿　点＿＿＿</span>
+  </div>
+  <div id="qc"></div>
+  <div class="sheet-btns">
+    <button class="pbtn" onclick="window.print()">印刷する</button>
+    <button class="bbtn" onclick="back()">戻る</button>
+    <button class="abtn" id="ansBtn" onclick="toggleAns()">解答を表示</button>
+    <button class="hbtn" id="howBtn" onclick="toggleHow()">ヒントを表示</button>
+  </div>
+</div>
+
+<script>
+/*__QDATA__*/
+
+const sel = new Set(FIELDS.map(f => f[0]));   // 分野：最初はぜんぶ選択
+const selR = new Set(ROUNDS);                 // 回：最初はぜんぶ選択
+let shuffleOn = false, ansShown = false, howShown = false;
+let SHEET = [], PAGING = 0;
+const PAPER = {
+  a3: { col: 131,  margin: '12mm',      size: 'A3' },
+  a4: { col: 91.5, margin: '11mm 9mm',  size: 'A4' },
+};
+let paper = 'a3';
+
+function setPaper(k){
+  paper = k;
+  document.body.classList.toggle('a4', k === 'a4');
+  document.getElementById('pageRule').textContent =
+    `@page{size:${PAPER[k].size};margin:${PAPER[k].margin}}`;
+  document.querySelectorAll('#paperSeg .seg-btn').forEach(b =>
+    b.classList.toggle('on', b.dataset.paper === k));
+  if(SHEET.length) paginate();
+}
+
+/* ── 操作画面 ─────────────────────────────────────────────── */
+function buildTags(){
+  const host = document.getElementById('fieldTags');
+  host.innerHTML = '';
+  const row = document.createElement('div'); row.className = 'frow';
+  const all = document.createElement('button');
+  all.className = 'ftag all'; all.textContent = '全分野';
+  all.onclick = () => {
+    const on = sel.size === FIELDS.length;
+    sel.clear(); if(!on) FIELDS.forEach(f => sel.add(f[0]));
+    buildTags(); refresh();
+  };
+  row.appendChild(all);
+  FIELDS.forEach(([k, name]) => {
+    const b = document.createElement('button');
+    b.className = 'ftag' + (sel.has(k) ? ' on' : '');
+    b.textContent = name;
+    b.onclick = () => { sel.has(k) ? sel.delete(k) : sel.add(k); buildTags(); refresh(); };
+    row.appendChild(b);
+  });
+  all.classList.toggle('on', sel.size === FIELDS.length);
+  host.appendChild(row);
+}
+
+function buildRounds(){
+  const host = document.getElementById('roundTags');
+  host.innerHTML = '';
+  const row = document.createElement('div'); row.className = 'frow';
+  ROUNDS.forEach(r => {
+    const b = document.createElement('button');
+    b.className = 'ftag' + (selR.has(r) ? ' on' : '');
+    b.textContent = '第' + r + '回';
+    b.onclick = () => {
+      if(selR.has(r)){ if(selR.size > 1) selR.delete(r); } else { selR.add(r); }
+      buildRounds(); refresh();
+    };
+    row.appendChild(b);
+  });
+  host.appendChild(row);
+}
+
+function buildRates(){
+  const lo = document.getElementById('lo'), hi = document.getElementById('hi');
+  for(let v = 0; v <= 90; v += 10){
+    lo.appendChild(new Option(v + '% 以上', v));
+  }
+  for(let v = 100; v >= 10; v -= 10){
+    hi.appendChild(new Option(v + '% 以下', v));
+  }
+  lo.value = 0; hi.value = 100;
+  lo.onchange = hi.onchange = refresh;
+}
+
+/* 大問の切り出し：条件に合う最後の小問までを前から出す */
+function cutSubs(g, lo, hi){
+  let last = -1;
+  g.subs.forEach((s, i) => { if(s.rate >= lo && s.rate <= hi) last = i; });
+  return last < 0 ? null : g.subs.slice(0, last + 1);
+}
+
+function eligible(){
+  const lo = +document.getElementById('lo').value, hi = +document.getElementById('hi').value;
+  const out = [];
+  GROUPS.forEach(g => {
+    if(!sel.has(g.field) || !selR.has(g.round)) return;
+    const subs = cutSubs(g, lo, hi);
+    if(subs) out.push({ g, subs });
+  });
+  return out;
+}
+
+function refresh(){
+  const e = eligible();
+  const n = e.length;
+  const nsub = e.reduce((a, x) => a + x.subs.length, 0);
+  const pt = e.reduce((a, x) => a + x.subs.reduce((b, s) => b + s.score, 0), 0);
+  const box = document.getElementById('pool');
+  box.classList.toggle('zero', n === 0);
+  box.innerHTML = n === 0
+    ? '<b>該当する大問がありません。</b>分野か正答率の条件をゆるめてください。'
+    : `該当 <b>${n}</b> 大問（設問 ${nsub} 問・満点 ${pt} 点）<br>` +
+      e.map(x => `<span class="po">第${x.g.round}回</span>${x.g.title}：`
+                 + `${x.subs.map(s => s.label || `${x.subs.length}問`).join('')}`).join('　/　');
+  const cnt = document.getElementById('cnt');
+  cnt.max = Math.max(1, n);
+  if(+cnt.value > n) cnt.value = Math.max(1, n);
+  document.getElementById('genBtn').disabled = (n === 0);
+}
+
+function setOrder(numOrder){
+  shuffleOn = !numOrder;
+  document.querySelectorAll('#ordSeg .seg-btn').forEach(b =>
+    b.classList.toggle('on', (b.dataset.order === '1') === numOrder));
+}
+
+/* ── テストを作る ─────────────────────────────────────────── */
+function fill(tpl, p){
+  return String(tpl).replace(/\{(\w+)\}/g, (m, k) => (k in p ? p[k] : m));
+}
+function esc(s){
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+                  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function pick(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generate(){
+  const e = eligible();
+  if(!e.length) return;
+  const cnt = Math.min(e.length, Math.max(1, parseInt(document.getElementById('cnt').value) || 1));
+  const lo = +document.getElementById('lo').value, hi = +document.getElementById('hi').value;
+
+  let chosen = e.slice();
+  for(let i = chosen.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [chosen[i], chosen[j]] = [chosen[j], chosen[i]];
+  }
+  chosen = chosen.slice(0, cnt);
+  if(!shuffleOn) chosen.sort((a, b) => GROUPS.indexOf(a.g) - GROUPS.indexOf(b.g));
+
+  SHEET = chosen.map((x, i) => groupEl(x, i, lo, hi));
+  ansShown = document.getElementById('withans').checked;
+  howShown = document.getElementById('withhow').checked;
+  syncBtns();
+  document.getElementById('ctrl').style.display = 'none';
+  document.getElementById('sheet').style.display = 'block';
+  applyAns(); applyHow();
+  paginate();
+  window.scrollTo(0, 0);
+}
+
+function figHtml(key, p){
+  if(!key) return '';
+  const k = (key === 'ogi' || key === 'circle') ? key + ':' + p.a : key;
+  return FIGS[k] || '';
+}
+
+function groupEl(x, idx, lo, hi){
+  const g = x.g;
+  const v = pick(VARIANTS[g.key]);
+  const p = v.p;
+  const d = document.createElement('div');
+  d.className = 'g';
+
+  let h = `<div class="g-head"><span class="g-num">${idx + 1}</span>`
+        + `<span class="badge">${FIELDNAME[g.field]}</span>`
+        + `<span class="rate">第${g.round}回・${g.title}</span></div>`;
+
+  // 大問の図（右回り込み or 下）
+  const gf = figHtml(g.fig, p);
+  if(gf && g.figpos === 'right') h += `<span class="fig-r">${gf}</span>`;
+  if(g.intro) h += `<div class="g-intro">${fill(g.intro, p)}</div>`;
+  if(g.body)  h += fill(g.body, p);
+  if(gf && g.figpos === 'bottom') h += `<div class="fig-b">${gf}</div>`;
+
+  // 小問
+  let ai = 0;
+  const flat = [];
+  g.subs.forEach(s => s.ans.forEach(lab => flat.push(lab)));
+  let used = 0;
+  x.subs.forEach(s => {
+    const off = !(s.rate >= lo && s.rate <= hi);
+    const sf = figHtml(s.fig, p);
+    h += `<div class="sub${off ? ' off' : ''}">`;
+    if(sf && s.figpos === 'right') h += `<span class="fig-r">${sf}</span>`;
+    h += `<span class="sub-lab">${s.label}</span>${fill(s.q, p)}`;
+    // 計算欄（元の問題用紙と同じく、手を動かす枠を置く）
+    const wmm = (WORK_MM[s.id] || 30);
+    h += `<div class="work" style="height:calc(${wmm}mm * var(--sc))"></div>`;
+    h += '<div class="ans"><span class="ans-lab">答</span>';
+    s.ans.forEach(lab => {
+      const a = v.a[used++] || '';
+      const plain = a.replace(/<[^>]*>/g, '');
+      const wide = plain.length > 18 ? ' full' : plain.length > 7 ? ' wide' : '';
+      h += `<span class="ai">${lab ? lab : ''}`
+         + `<span class="al${wide}" data-a="${esc(a)}"></span></span>`;
+    });
+    h += '</div>';
+    if(s.how) h += `<div class="how">${fill(s.how, p)}</div>`;
+    h += '</div>';
+  });
+  d.innerHTML = h;
+  return d;
+}
+
+/* ── 解答・ヒントの表示 ───────────────────────────────────── */
+function applyAns(){
+  SHEET.forEach(el => el.querySelectorAll('.al').forEach(e => {
+    e.innerHTML = ansShown ? (e.dataset.a || '') : '';
+    e.classList.toggle('show', ansShown);
+  }));
+}
+function applyHow(){
+  SHEET.forEach(el => el.querySelectorAll('.how').forEach(e =>
+    e.classList.toggle('show', howShown)));
+}
+function syncBtns(){
+  const a = document.getElementById('ansBtn'), b = document.getElementById('howBtn');
+  a.textContent = ansShown ? '解答を隠す' : '解答を表示';
+  a.classList.toggle('on', ansShown);
+  b.textContent = howShown ? 'ヒントを隠す' : 'ヒントを表示';
+  b.classList.toggle('on', howShown);
+}
+function toggleAns(){ ansShown = !ansShown; syncBtns(); applyAns(); paginate(); }
+function toggleHow(){ howShown = !howShown; syncBtns(); applyHow(); paginate(); }
+
+function back(){
+  document.getElementById('ctrl').style.display = 'block';
+  document.getElementById('sheet').style.display = 'none';
+}
+
+/* ── ページ割りつけ（社会・理科テストと同じ） ───────────────── */
+function pxPerMm(){
+  const d = document.createElement('div');
+  d.style.cssText = 'position:absolute;visibility:hidden;width:1mm;height:100mm';
+  document.body.appendChild(d);
+  const v = d.offsetHeight / 100;
+  d.remove();
+  return v || 3.7795;
+}
+function paginate(){
+  const token = ++PAGING;
+  const imgs = [];
+  SHEET.forEach(el => el.querySelectorAll('img').forEach(i => { if(!i.complete) imgs.push(i); }));
+  Promise.all(imgs.map(i => new Promise(r => { i.onload = i.onerror = r; })))
+         .then(() => { if(token === PAGING) layoutPages(); });
+}
+function layoutPages(){
+  const qc = document.getElementById('qc');
+  const head = document.getElementById('shHead');
+  const colW = PAPER[paper].col * pxPerMm();
+
+  const probe = document.createElement('div');
+  probe.className = 'pcol';
+  probe.style.cssText = 'position:absolute;left:-10000px;top:0;width:' + colW + 'px';
+  document.body.appendChild(probe);
+  const hs = SHEET.map(el => {
+    probe.appendChild(el);
+    const h = el.offsetHeight + (parseFloat(getComputedStyle(el).marginBottom) || 0);
+    probe.removeChild(el);
+    return h;
+  });
+  probe.remove();
+
+  qc.textContent = '';
+  let cols = null, col = null, usedH = 0, limit = 0, nCol = 0;
+  function addCol(){
+    col = document.createElement('div'); col.className = 'pcol';
+    cols.appendChild(col); nCol++; usedH = 0;
+  }
+  function addPage(){
+    const page = document.createElement('div'); page.className = 'page';
+    if(!qc.children.length && head) page.appendChild(head);
+    cols = document.createElement('div'); cols.className = 'pcols';
+    page.appendChild(cols); qc.appendChild(page);
+    nCol = 0; addCol();
+    limit = cols.clientHeight;
+  }
+  addPage();
+  SHEET.forEach((el, i) => {
+    if(usedH > 0 && usedH + hs[i] > limit){ if(nCol < 2){ addCol(); } else { addPage(); } }
+    col.appendChild(el);
+    usedH += hs[i];
+  });
+}
+
+buildRounds();
+buildTags();
+buildRates();
+setPaper('a3');
+refresh();
+</script>
+</body>
+</html>

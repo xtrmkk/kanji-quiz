@@ -21,6 +21,11 @@ def rika():
     return render_template('rika.html')
 
 
+@app.route('/nnop')
+def nnop():
+    return render_template('nnop.html')
+
+
 @app.route('/generate', methods=['POST'])
 def generate():
     pdf_bytes = generate_pdf()
