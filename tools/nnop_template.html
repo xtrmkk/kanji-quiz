@@ -91,6 +91,13 @@ body.a4{--paperw:210mm;--paperh:297mm;--mgv:16mm;--mgh:14mm;
 .badge{font-size:calc(var(--fs)*.78);padding:1px 6px;border-radius:4px;background:#f3e7ea;
        color:#9b2c3c;white-space:nowrap}
 .rate{font-size:calc(var(--fs)*.76);color:#aaa}
+/* 小問の配点（印刷にも出す）と正答率（ボタンで切り替え） */
+.sc{font-size:calc(var(--fs)*.78);color:#444;border:1px solid #bbb;border-radius:3px;
+    padding:0 .35em;margin-right:.4em;white-space:nowrap;vertical-align:.08em}
+.pct{display:none;font-size:calc(var(--fs)*.78);color:#9b2c3c;background:#f7eaed;
+     border-radius:3px;padding:0 .35em;margin-right:.4em;white-space:nowrap;
+     vertical-align:.08em}
+.pct.show{display:inline}
 .g-intro{font-size:var(--fs);line-height:1.68;text-align:justify}
 .box{border:1px solid #777;padding:3px 7px;margin:5px 0;font-size:var(--fs);line-height:1.6}
 /* 循環小数の点 */
@@ -151,11 +158,11 @@ body.a4{--paperw:210mm;--paperh:297mm;--mgv:16mm;--mgh:14mm;
 .fd{padding:0 .22em}
 
 .sheet-btns{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-.pbtn,.bbtn,.abtn,.hbtn{padding:11px 22px;color:#fff;border:none;border-radius:10px;
+.pbtn,.bbtn,.abtn,.hbtn,.rbtn{padding:11px 22px;color:#fff;border:none;border-radius:10px;
       font-size:15px;font-weight:600;font-family:inherit;cursor:pointer}
 .pbtn{background:#48bb78}.bbtn{background:#718096}.abtn{background:#dd6b20}
-.hbtn{background:#5a67d8}
-.abtn.on{background:#9c4221}.hbtn.on{background:#3c479e}
+.hbtn{background:#5a67d8}.rbtn{background:#2c7a7b}
+.abtn.on{background:#9c4221}.hbtn.on{background:#3c479e}.rbtn.on{background:#1d5253}
 
 @media print{
   .ctrl,.sheet-btns{display:none!important}
@@ -247,6 +254,7 @@ body.a4{--paperw:210mm;--paperh:297mm;--mgv:16mm;--mgh:14mm;
     <button class="bbtn" onclick="back()">戻る</button>
     <button class="abtn" id="ansBtn" onclick="toggleAns()">解答を表示</button>
     <button class="hbtn" id="howBtn" onclick="toggleHow()">ヒントを表示</button>
+    <button class="rbtn" id="rateBtn" onclick="toggleRate()">正答率を表示</button>
   </div>
 </div>
 
@@ -255,7 +263,7 @@ body.a4{--paperw:210mm;--paperh:297mm;--mgv:16mm;--mgh:14mm;
 
 const sel = new Set(FIELDS.map(f => f[0]));   // 分野：最初はぜんぶ選択
 const selR = new Set(ROUNDS);                 // 回：最初はぜんぶ選択
-let shuffleOn = false, ansShown = false, howShown = false;
+let shuffleOn = false, ansShown = false, howShown = false, rateShown = false;
 let SHEET = [], PAGING = 0;
 const PAPER = {
   a3: { col: 125,  margin: '18mm',      size: 'A3' },
@@ -398,7 +406,7 @@ function generate(){
   syncBtns();
   document.getElementById('ctrl').style.display = 'none';
   document.getElementById('sheet').style.display = 'block';
-  applyAns(); applyHow();
+  applyAns(); applyHow(); applyRate();
   paginate();
   window.scrollTo(0, 0);
 }
@@ -436,11 +444,16 @@ function groupEl(x, idx, lo, hi){
     const sf = figHtml(s.fig, p);
     h += `<div class="sub${off ? ' off' : ''}">`;
     if(sf && s.figpos === 'right') h += `<span class="fig-r">${sf}</span>`;
-    h += `<span class="sub-lab">${s.label}</span>${fill(s.q, p)}`;
+    h += `<span class="sub-lab">${s.label}</span>`
+       + `<span class="sc">${s.score}点</span>`
+       + `<span class="pct">正答率${s.rate}%</span>`
+       + `${fill(s.q, p)}`;
     if(sf && s.figpos === 'bottom') h += `<div class="fig-b">${sf}</div>`;
     // 計算欄（元の問題用紙と同じく、手を動かす枠を置く）
-    const wmm = (WORK_MM[s.id] || 30);
-    h += `<div class="work" style="height:calc(${wmm}mm * var(--sc))"></div>`;
+    const wmm = (s.id in WORK_MM) ? WORK_MM[s.id] : 30;
+    if(wmm > 0)
+      h += `<div class="work" data-wmm="${wmm}" `
+         + `style="height:calc(${wmm}mm * var(--sc))"></div>`;
     h += '<div class="ans"><span class="ans-lab">答</span>';
     s.ans.forEach(lab => {
       const a = v.a[used++] || '';
@@ -464,6 +477,10 @@ function applyAns(){
     e.classList.toggle('show', ansShown);
   }));
 }
+function applyRate(){
+  SHEET.forEach(el => el.querySelectorAll('.pct').forEach(e =>
+    e.classList.toggle('show', rateShown)));
+}
 function applyHow(){
   SHEET.forEach(el => el.querySelectorAll('.how').forEach(e =>
     e.classList.toggle('show', howShown)));
@@ -474,9 +491,13 @@ function syncBtns(){
   a.classList.toggle('on', ansShown);
   b.textContent = howShown ? 'ヒントを隠す' : 'ヒントを表示';
   b.classList.toggle('on', howShown);
+  const r = document.getElementById('rateBtn');
+  r.textContent = rateShown ? '正答率を隠す' : '正答率を表示';
+  r.classList.toggle('on', rateShown);
 }
 function toggleAns(){ ansShown = !ansShown; syncBtns(); applyAns(); paginate(); }
 function toggleHow(){ howShown = !howShown; syncBtns(); applyHow(); paginate(); }
+function toggleRate(){ rateShown = !rateShown; syncBtns(); applyRate(); paginate(); }
 
 function back(){
   document.getElementById('ctrl').style.display = 'block';
@@ -504,13 +525,39 @@ function layoutPages(){
   const head = document.getElementById('shHead');
   const colW = PAPER[paper].col * pxPerMm();
 
+  // 段の高さを先に知るために、見出しつきのページを1枚だけ作って測る
+  qc.textContent = '';
+  const pp = document.createElement('div'); pp.className = 'page';
+  if(head) pp.appendChild(head);
+  const pc = document.createElement('div'); pc.className = 'pcols';
+  pp.appendChild(pc); qc.appendChild(pp);
+  const limit0 = pc.clientHeight - 4;
+  qc.textContent = '';
+
   const probe = document.createElement('div');
   probe.className = 'pcol';
   probe.style.cssText = 'position:absolute;left:-10000px;top:0;width:' + colW + 'px';
   document.body.appendChild(probe);
+  const meas = el => el.offsetHeight + (parseFloat(getComputedStyle(el).marginBottom) || 0);
+  const minmm = 14;                       // 縮めても1枠あたりこれだけは残す
   const hs = SHEET.map(el => {
+    // 計算欄はいったん元の問題用紙どおりの大きさに戻す
+    el.querySelectorAll('.work').forEach(w => {
+      w.style.height = 'calc(' + w.dataset.wmm + 'mm * var(--sc))';
+    });
     probe.appendChild(el);
-    const h = el.offsetHeight + (parseFloat(getComputedStyle(el).marginBottom) || 0);
+    let h = meas(el);
+    if(h > limit0){
+      const works = [...el.querySelectorAll('.work')];
+      const total = works.reduce((t, w) => t + w.offsetHeight, 0);
+      const keep = works.length * minmm * pxPerMm();
+      const want = total - (h - limit0);
+      if(total > 0 && want > keep){
+        const k = want / total;
+        works.forEach(w => { w.style.height = (w.offsetHeight * k).toFixed(1) + 'px'; });
+        h = meas(el);
+      }
+    }
     probe.removeChild(el);
     return h;
   });
