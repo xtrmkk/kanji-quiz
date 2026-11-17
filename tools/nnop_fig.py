@@ -426,7 +426,12 @@ def circ_svg(Wmm=12, W=300, H=276, pad=16):
     s.append(ln(Dp, G, 0.85, 'stroke-dasharray="4,3"'))
     s.append(ln(E, Fp, 0.85, 'stroke-dasharray="4,3"'))
     # 直角の印（2本の点線の交点）と直角の印（HとI）
-    mx = (i - h) / 2
+    # DE・FGはPQに垂直な弦なので、PQはどちらも二等分する（DH＝HE、FI＝IG）。
+    # よって点線 D-G と E-F はPQ上で交わる。その位置を実際に解いて出す
+    # （元は (i-h)/2 と書いていて、本当の交点の半分の位置に印が出ていた）。
+    mx = -h + (i + h) * d / (d + f)
+    _y = lambda a, b, x: a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0])
+    assert abs(_y(Dp, G, mx)) < 1e-9 and abs(_y(E, Fp, mx)) < 1e-9, '交点がPQ上にない'
     px, py = X(mx), Y(0)
     t = 9.0 / math.sqrt(2)
     s.append(f'<path d="M {px-t:.1f},{py-t:.1f} L {px:.1f},{py-2*t:.1f} '
