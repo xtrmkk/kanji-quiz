@@ -4,6 +4,7 @@ __pycache__/
 quiz_final.html
 *.json
 !tools/*.json
+!package.json
 *.zip
 .claude/
 .DS_Store
@@ -18,3 +19,5 @@ NN TEST/
 # 図の切り出し作業用（84MB・画像を埋めこんだ作業ファイル）
 crop_tool.html
 nnop_pages/
+node_modules/
+.wrangler/

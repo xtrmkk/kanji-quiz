@@ -4,8 +4,8 @@
   python3 tools/build_shakai.py
 
 tools/shakai_template.html（骨組み）に問題データと tools/figs/*.jpg を
-埋め込んで templates/shakai.html を出力する。
-templates/shakai.html が実際に使うファイルで、単体で開けるスタンドアロン版。
+埋め込んで public/shakai/index.html を出力する。
+public/shakai/index.html が実際に使うファイルで、単体で開けるスタンドアロン版。
 このディレクトリのファイルは素材なので直接ブラウザで開いても動かない。
 
 問題データ:
@@ -196,7 +196,7 @@ def build():
             'const RANGES=' + json.dumps(RANGES, ensure_ascii=False) + ';')
     out = tpl.replace('/*__QDATA__*/', data)
 
-    dest = os.path.join(ROOT, 'templates', 'shakai.html')
+    dest = os.path.join(ROOT, 'public', 'shakai', 'index.html')
     open(dest, 'w', encoding='utf-8').write(out)
     print(f'生成: {dest}  ({len(out)//1024} KB)')
 

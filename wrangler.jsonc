@@ -1,0 +1,16 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  // Cloudflare Workers の静的アセットとして public/ をまるごと配信する。
+  //   npx wrangler dev      … 本番と同じ動きでローカル確認
+  //   npx wrangler deploy   … 公開
+  //
+  // サーバ側のコードは無い（Workers のコードを置かない「静的のみ」の構成）。
+  // public/ の中は全部ビルド済みの1枚もののHTMLで、外部ファイルを読まない。
+  "name": "test1117",
+  "compatibility_date": "2026-11-17",
+  "assets": {
+    "directory": "./public",
+    // /nnop も /nnop/ も public/nnop/index.html を返す（既定値）
+    "html_handling": "auto-trailing-slash"
+  }
+}

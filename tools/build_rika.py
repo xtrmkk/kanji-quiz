@@ -105,7 +105,7 @@ def build():
             'const EVAP_TABLE=' + json.dumps(evap, ensure_ascii=False) + ';')
     out = tpl.replace('/*__QDATA__*/', data)
 
-    dest = os.path.join(ROOT, 'templates', 'rika.html')
+    dest = os.path.join(ROOT, 'public', 'rika', 'index.html')
     open(dest, 'w', encoding='utf-8').write(out)
     print(f'生成: {dest}  ({len(out)//1024//1024} MB)')
 

@@ -58,7 +58,6 @@ body{
   display:flex;align-items:center;justify-content:center;
   font-size:26px;margin-bottom:16px;
 }
-.card.c-kokugo .card-icon{background:#eeecff}
 .card.c-shakai .card-icon{background:#e3f6ea}
 .card.c-rika   .card-icon{background:#e4f4f6}
 .card.c-nnop   .card-icon{background:#fdeef0}
@@ -71,7 +70,6 @@ body{
   font-size:11px;font-weight:600;color:#444;background:#f5f6f9;
   border-radius:8px;padding:4px 9px;white-space:nowrap;
 }
-.card.c-kokugo .stat{color:#4f46e5;background:#eeecff}
 .card.c-shakai .stat{color:#1f8a4c;background:#e3f6ea}
 .card.c-rika   .stat{color:#0f7c8a;background:#e4f4f6}
 .card.c-nnop   .stat{color:#b03a4a;background:#fdeef0}
@@ -89,7 +87,6 @@ body{
 .btn:active{transform:scale(.98)}
 .btn:disabled{filter:grayscale(.4) brightness(.9);cursor:not-allowed}
 
-.c-kokugo .btn{background:linear-gradient(135deg,#5a52ea,#4338ca)}
 .c-shakai .btn{background:linear-gradient(135deg,#34a866,#1f8a4c)}
 .c-rika   .btn{background:linear-gradient(135deg,#18a2ae,#0f7c8a)}
 .c-nnop   .btn{background:linear-gradient(135deg,#d2566c,#a8324a)}
@@ -115,26 +112,10 @@ body{
   <div class="hero">
     <span class="hero-badge">FREE PRINT TEST GENERATOR</span>
     <h1>テストジェネレーター</h1>
-    <p>国語・社会・理科、毎回ランダムに出題される印刷用テストをその場で作成</p>
+    <p>社会・理科・算数、毎回ランダムに出題される印刷用テストをその場で作成</p>
   </div>
 
   <div class="grid">
-
-    <div class="card c-kokugo">
-      <div class="card-icon">📝</div>
-      <h2>国語テスト</h2>
-      <p class="desc">対義語224組から毎回ランダムに60問を出題。升目つきの解答欄でPDFをダウンロード。</p>
-      <div class="stat-row">
-        <span class="stat">対義語 224組</span>
-        <span class="stat">全60問</span>
-        <span class="stat">PDF出力</span>
-      </div>
-      <div class="spacer"></div>
-      <form id="genForm" action="/generate" method="post">
-        <button type="submit" class="btn" id="genBtn">テストを作成する</button>
-      </form>
-      <p class="foot-note">PDFをダウンロードしA4用紙に印刷してください</p>
-    </div>
 
     <div class="card c-shakai">
       <div class="card-icon">🏯</div>
@@ -146,7 +127,7 @@ body{
         <span class="stat">解答表示</span>
       </div>
       <div class="spacer"></div>
-      <a href="/shakai" class="btn">テストを開く</a>
+      <a href="/shakai/" class="btn">テストを開く</a>
       <p class="foot-note">地理・古代〜現代・公民・重要史料からランダム出題</p>
     </div>
 
@@ -160,44 +141,27 @@ body{
         <span class="stat">解答表示</span>
       </div>
       <div class="spacer"></div>
-      <a href="/rika" class="btn">テストを開く</a>
+      <a href="/rika/" class="btn">テストを開く</a>
       <p class="foot-note">化学・地学・物理・生物からランダム出題</p>
     </div>
 
     <div class="card c-nnop">
       <div class="card-icon">📐</div>
       <h2>NNOP算数</h2>
-      <p class="desc">麻布中NNオープン模試の算数（第1〜3回・夏期そっくり）を、回・分野・全体正答率で絞って出題。数値は毎回変わります。</p>
+      <p class="desc">麻布中NNオープン模試の算数（第1〜5回・夏期そっくり）を、回・分野・全体正答率で絞って出題。数値は毎回変わります。</p>
       <div class="stat-row">
-        <span class="stat">4回分 64問</span>
+        <span class="stat">6回分 95問</span>
         <span class="stat">分野×難度</span>
         <span class="stat">数値ランダム</span>
       </div>
       <div class="spacer"></div>
-      <a href="/nnop" class="btn">テストを開く</a>
+      <a href="/nnop/" class="btn">テストを開く</a>
       <p class="foot-note">苦手分野をねらって練習できます</p>
     </div>
 
   </div>
 
-  <p class="global-note">
-    サーバーが起動中でない場合、最初のアクセスに少し時間がかかることがあります。
-  </p>
-
 </div>
 
-<script>
-  const form = document.getElementById('genForm');
-  const btn  = document.getElementById('genBtn');
-
-  form.addEventListener('submit', () => {
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spinner"></span>生成中…';
-    setTimeout(() => {
-      btn.disabled = false;
-      btn.textContent = 'テストを作成する';
-    }, 8000);
-  });
-</script>
 </body>
 </html>

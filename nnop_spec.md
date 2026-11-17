@@ -372,7 +372,7 @@ op1-1／op1-3／op1-4 は図なし（4のダイヤグラムは解説側だけに
 
 既存の社会・理科テストと同じ方式に揃える。
 
-- `tools/nnop_template.html`（骨組み）＋ `tools/data_nnop.js`（設問マスタと生成器）→ `tools/build_nnop.py` で `templates/nnop.html` を生成
+- `tools/nnop_template.html`（骨組み）＋ `tools/data_nnop.js`（設問マスタと生成器）→ `tools/build_nnop.py` で `public/nnop/index.html` を生成
 - Flask の `/nnop` で配信、トップページに導線を追加
 - 印刷レイアウトは**ページ割りつけ方式**（実寸・JSが1大問ずつ段に割りつけ）を流用。**大問は分割しない**
 - **用紙は A3 が既定**（A4にも切替可）［U］。A3は 297×420mm、余白12mm、2段（段幅131mm）
@@ -760,7 +760,7 @@ setPaper('a3'); ansShown=howShown=rateShown=false; syncBtns(); bad
 | 第5回 | R1〜R6a | 15 | `NN TEST/算数第5回.pdf` |
 
 合計6回分・95問。各回60点満点。`python3 tools/build_nnop.py` が独立検算と回帰テストを
-全候補に流して `templates/nnop.html`（約1190KB）を作る。全部通っている状態でコミット済み。
+全候補に流して `public/nnop/index.html`（約1190KB）を作る。全部通っている状態でコミット済み。
 
 **ファイル名の番号と「第何回」はずれている**（`nnop4_*`＝夏期そっくり、`nnop5_*`＝第4回、
 `nnop6_*`＝第5回）。次に第6回を足すときは `--n 7 --round 6` になる。

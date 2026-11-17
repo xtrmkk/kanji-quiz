@@ -4,7 +4,7 @@
   python3 tools/build_nnop.py
 
 tools/nnop_template.html に、tools/nnop_data.py が出した設問マスタ・候補と
-tools/nnop_fig.py が描いたSVGを埋めこんで templates/nnop.html を作る。
+tools/nnop_fig.py が描いたSVGを埋めこんで public/nnop/index.html を作る。
 
 ビルド前に必ず検証を走らせる（nnop_spec.md 7章）。
  1. 独立検算  … 生成器とは別の原理で解答を出し直して突き合わせる
@@ -315,7 +315,7 @@ def build():
     for bad in ('{#', '{%', '{{'):
         assert bad not in html, f'Jinjaと衝突する記号が入っている: {bad}'
 
-    dest = os.path.join(ROOT, 'templates', 'nnop.html')
+    dest = os.path.join(ROOT, 'public', 'nnop', 'index.html')
     open(dest, 'w', encoding='utf-8').write(html)
     print(f'生成: {dest}  ({len(html)//1024} KB)')
 
