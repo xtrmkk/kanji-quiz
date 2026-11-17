@@ -17,3 +17,4 @@ static/
 NN TEST/
 # 図の切り出し作業用（84MB・画像を埋めこんだ作業ファイル）
 crop_tool.html
+nnop_pages/

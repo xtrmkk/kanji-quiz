@@ -644,3 +644,98 @@ def ring_svg(n: int, labeled: bool, R=66, r=13, pad=18) -> str:
                      f'text-anchor="middle" fill="#111">{t}</text>')
     o.append('</svg>')
     return ''.join(o)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 第5回の図
+# ══════════════════════════════════════════════════════════════════
+def dai_svg(W: int, H: int, e1: int, e2: int, u=11.0, pad=16) -> str:
+    """台紙（図1）と、2枚の長方形をはりつけた例（図2）を1枚に並べる。
+
+    図2は左上に 横e1×たてe2、右下に 横e2×たてe1 を置いた「直角向き」の例。
+    重なり（ぬりつぶし）は (e1+e2-W)×(e1+e2-H)。
+    """
+    bw, bh = W * u, H * u                       # 台紙の大きさ(px)
+    lab = 22                                    # 寸法の文字ぶんの余白
+    gap = 34
+    x1 = pad + lab                              # 図1の左上
+    y1 = pad + lab
+    x2 = x1 + bw + gap + lab + 10               # 図2の左上
+    y2 = y1
+    Wpx = x2 + bw + lab + pad
+    Hpx = y1 + bh + lab + pad
+    o = [f'<svg viewBox="0 0 {Wpx:.0f} {Hpx:.0f}" xmlns="http://www.w3.org/2000/svg" '
+         f'class="fig-svg">']
+    box = (lambda x, y, w, h, lw: f'<rect x="{x:.1f}" y="{y:.1f}" width="{w:.1f}" '
+                                  f'height="{h:.1f}" fill="none" stroke="#111" '
+                                  f'stroke-width="{lw}"/>')
+    txt = (lambda x, y, t, an='middle': f'<text x="{x:.1f}" y="{y:.1f}" font-size="{FS}" '
+                                        f'text-anchor="{an}">{t}</text>')
+
+    # ── 図1 ───────────────────────────────────────────────
+    o.append(box(x1, y1, bw, bh, LW))
+    o.append(txt(x1 + bw / 2, y1 - 6, f'{W}cm'))
+    o.append(txt(x1 - 6, y1 + bh / 2 + 4, f'{H}cm', 'end'))
+    o.append(txt(x1 + bw / 2, y1 + bh + lab - 4, '図1'))
+
+    # ── 図2 ───────────────────────────────────────────────
+    ow, oh = (e1 + e2 - W) * u, (e1 + e2 - H) * u      # 重なり
+    ox = x2 + (W - e2) * u                              # 右下の長方形の左端
+    oy = y2 + (H - e1) * u
+    o.append(f'<rect x="{ox:.1f}" y="{oy:.1f}" width="{ow:.1f}" height="{oh:.1f}" '
+             f'fill="{SHADE}" stroke="none"/>')
+    o.append(box(x2, y2, bw, bh, LW))                     # 台紙
+    o.append(box(x2, y2, e1 * u, e2 * u, LW2))            # 左上（横e1×たてe2）
+    o.append(box(x2 + (W - e2) * u, y2 + (H - e1) * u,
+                 e2 * u, e1 * u, LW2))                    # 右下（横e2×たてe1）
+    for name, px, py, dx, dy in (('A', x2, y2, -8, -4), ('D', x2 + bw, y2, 9, -4),
+                                 ('B', x2, y2 + bh, -8, 13),
+                                 ('C', x2 + bw, y2 + bh, 9, 13)):
+        o.append(txt(px + dx, py + dy, name))
+    o.append(txt(x2 + e1 * u / 2, y2 - 6, f'{e1}cm'))             # 上辺
+    o.append(txt(x2 - 6, y2 + e2 * u / 2 + 4, f'{e2}cm', 'end'))  # 左辺
+    o.append(txt(x2 + bw + 6, y2 + (H - e1 / 2) * u + 4, f'{e1}cm', 'start'))  # 右辺
+    o.append(txt(x2 + (W - e2 / 2) * u, y2 + bh + 13, f'{e2}cm'))  # 下辺
+    o.append(txt(x2 + bw / 2, y2 + bh + lab - 4, '図2'))
+    o.append('</svg>')
+    return ''.join(o)
+
+
+def sieve_svg(N: int, cols=6, show=8, cw=54.0, ch=17.0, pad=4) -> str:
+    """1からNまでを横cols個ずつ並べた表（最初のshow行＋…＋最終行）。"""
+    rows = N // cols
+    lw = cw + 14                                   # 行ラベルの列は少し広い
+    nrow = 1 + show + 1 + 1                        # 見出し・本体・点々・最終行
+    Wpx, Hpx = lw + cw * cols + pad * 2, ch * nrow + pad * 2
+    o = [f'<svg viewBox="0 0 {Wpx:.0f} {Hpx:.0f}" xmlns="http://www.w3.org/2000/svg" '
+         f'class="fig-svg">']
+    cx = lambda j: pad + lw + cw * j
+    cy = lambda i: pad + ch * i
+    txt = (lambda x, y, t: f'<text x="{x:.1f}" y="{y:.1f}" font-size="{FS}" '
+                           f'text-anchor="middle">{t}</text>')
+    # 枠
+    o.append(f'<rect x="{pad}" y="{pad}" width="{lw + cw * cols:.1f}" '
+             f'height="{ch * nrow:.1f}" fill="none" stroke="#111" stroke-width="{LW}"/>')
+    for i in range(1, nrow):
+        o.append(f'<line x1="{pad}" y1="{cy(i):.1f}" x2="{pad + lw + cw * cols:.1f}" '
+                 f'y2="{cy(i):.1f}" stroke="#111" stroke-width="{LW2}"/>')
+    for j in range(cols + 1):
+        x = pad + lw if j == 0 else cx(j)
+        o.append(f'<line x1="{x:.1f}" y1="{pad}" x2="{x:.1f}" '
+                 f'y2="{pad + ch * nrow:.1f}" stroke="#111" stroke-width="{LW2}"/>')
+    # 見出し
+    for j in range(cols):
+        o.append(txt(cx(j) + cw / 2, cy(0) + ch - 4, f'{chr(ord("A") + j)} 列'))
+    # 本体
+    for i in range(show):
+        o.append(txt(pad + lw / 2, cy(i + 1) + ch - 4, f'{i + 1} 行目'))
+        for j in range(cols):
+            o.append(txt(cx(j) + cw / 2, cy(i + 1) + ch - 4, str(i * cols + j + 1)))
+    o.append(txt(pad + lw / 2, cy(show + 1) + ch - 5, '・'))
+    for j in range(cols):
+        o.append(txt(cx(j) + cw / 2, cy(show + 1) + ch - 5, '・'))
+    o.append(txt(pad + lw / 2, cy(show + 2) + ch - 4, f'{rows} 行目'))
+    for j in range(cols):
+        o.append(txt(cx(j) + cw / 2, cy(show + 2) + ch - 4, str(N - cols + j + 1)))
+    o.append('</svg>')
+    return ''.join(o)
