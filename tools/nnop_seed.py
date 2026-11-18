@@ -136,6 +136,12 @@ def fill(tpl, p):
 
 
 def plain(s):
+    # 分数は a/b の形に戻す（タグを落とすだけだと 1/1260 が「11260」になる）
+    # 帯分数は「整数＋分数のspan」なので、前の整数ごと拾う
+    s = re.sub(r'(\d*)<span class="fr"><span class="fn">(.*?)</span>'
+               r'<span class="fd">(.*?)</span></span>',
+               lambda m: (m.group(1) + 'と' if m.group(1) else '')
+                         + f'{m.group(2)}/{m.group(3)}', s)
     s = re.sub(r'<sup>(.*?)</sup>', r'^\1', s)
     return re.sub(r'<[^>]+>', '', s)
 
