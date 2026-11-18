@@ -72,6 +72,11 @@ select{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;
   font-family:"SF Mono",Menlo,monospace;white-space:nowrap}
 #codeIn{font-family:"SF Mono",Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}
 #codeIn.bad{border-color:#d32f2f;background:#fdeeee}
+.lnk{background:none;border:none;color:#4f7bd8;cursor:pointer;font-size:inherit;
+  padding:0;text-decoration:underline}
+.warnbar{background:#fff4e5;border:1px solid #f0cfa0;color:#8a5a00;border-radius:5px;
+  padding:6px 10px;font-size:11px;margin-bottom:6px}
+@media print{.warnbar{display:none}}
 
 /* 用紙を実寸で組む。既定はA3（元の問題用紙に合わせたサイズ） */
 body{--paperw:297mm;--paperh:420mm;--mgv:18mm;--mgh:18mm;
@@ -246,6 +251,26 @@ body.a4{--paperw:210mm;--paperh:297mm;--mgv:16mm;--mgh:14mm;
   </div>
 
   <div class="card">
+    <div class="card-h">最近出した問題</div>
+    <div class="row">
+      <label>同じ大問</label>
+      <span class="seg" id="avoidSeg">
+        <button class="seg-btn on" data-avoid="1" onclick="setAvoid(true)">さける</button>
+        <button class="seg-btn" data-avoid="0" onclick="setAvoid(false)">気にしない</button>
+      </span>
+    </div>
+    <div class="row">
+      <label>さける範囲</label>
+      <span class="seg" id="avoidNSeg">
+        <button class="seg-btn on" data-n="3" onclick="setAvoidN(3)">直近3回</button>
+        <button class="seg-btn" data-n="5" onclick="setAvoidN(5)">5回</button>
+        <button class="seg-btn" data-n="10" onclick="setAvoidN(10)">10回</button>
+      </span>
+    </div>
+    <div class="pool" id="histInfo"></div>
+  </div>
+
+  <div class="card">
     <div class="card-h">前と同じテストを出す</div>
     <div class="row">
       <label for="codeIn">番号</label>
@@ -268,9 +293,10 @@ body.a4{--paperw:210mm;--paperh:297mm;--mgv:16mm;--mgh:14mm;
     <span class="sh-meta">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿　点＿＿＿</span>
     <span class="sh-code" id="shCode"></span>
   </div>
+  <div class="warnbar" id="warnBar" style="display:none"></div>
   <div id="qc"></div>
   <div class="sheet-btns">
-    <button class="pbtn" onclick="window.print()">印刷する</button>
+    <button class="pbtn" onclick="printAndMark()">印刷する</button>
     <button class="bbtn" onclick="back()">戻る</button>
     <button class="abtn" id="ansBtn" onclick="toggleAns()">解答を表示</button>
     <button class="hbtn" id="howBtn" onclick="toggleHow()">ヒントを表示</button>
@@ -291,6 +317,7 @@ const FIGS={"ogi:20": "<svg viewBox=\"0 0 140 140\" xmlns=\"http://www.w3.org/20
 const sel = new Set(FIELDS.map(f => f[0]));   // 分野：最初はぜんぶ選択
 const selR = new Set(ROUNDS);                 // 回：最初はぜんぶ選択
 let shuffleOn = false, ansShown = false, howShown = false, rateShown = false;
+let LASTKEYS = [], AVOIDFAIL = false;
 let SHEET = [], PAGING = 0;
 const PAPER = {
   a3: { col: 125,  margin: '18mm',      size: 'A3' },
@@ -381,6 +408,7 @@ function eligible(){
 
 function refresh(){
   const e = eligible();
+  const rec = recentKeys();
   const n = e.length;
   const nsub = e.reduce((a, x) => a + x.subs.length, 0);
   const pt = e.reduce((a, x) => a + x.subs.reduce((b, s) => b + s.score, 0), 0);
@@ -395,6 +423,16 @@ function refresh(){
   cnt.max = Math.max(1, n);
   if(+cnt.value > n) cnt.value = Math.max(1, n);
   document.getElementById('genBtn').disabled = (n === 0);
+  if(n && rec.size){
+    const hit = e.filter(x => rec.has(x.g.key)).length;
+    const left = n - hit;
+    const need = +cnt.value;
+    if(hit || left < need)
+      box.innerHTML += `<br><span class="po">最近出した</span>${hit} 大問をさけています`
+        + (left < need
+            ? `。<b>残り ${left} 大問では ${need} 問そろわないので、重なります。</b>`
+            : `（残り ${left} 大問）`);
+  }
 }
 
 function setOrder(numOrder){
@@ -475,9 +513,96 @@ function useCode(){
   generate(d.seed);
 }
 
+/* ── 出題済みの記録 ───────────────────────────────────────
+   印刷したときだけ「出した」とみなして、この端末のブラウザに残す。
+   （採点/記録.json とは別もの。あちらは採点の記録） */
+const HKEY = 'nnop.history', AKEY = 'nnop.avoid';
+let avoidOn = true, avoidN = 3;
+
+function histLoad(){
+  try { return JSON.parse(localStorage.getItem(HKEY) || '[]'); } catch(e){ return []; }
+}
+function histSave(h){
+  try { localStorage.setItem(HKEY, JSON.stringify(h.slice(0, 30))); } catch(e){}
+}
+function histAdd(code, keys){
+  const h = histLoad().filter(x => x.code !== code);
+  h.unshift({ code, keys, d: new Date().toISOString().slice(0, 10) });
+  histSave(h);
+  drawHist();
+  refresh();
+}
+function histClear(){ try { localStorage.removeItem(HKEY); } catch(e){} drawHist(); refresh(); }
+
+/** 直近 avoidN 回に出した大問キーの集合 */
+function recentKeys(){
+  if(!avoidOn) return new Set();
+  const h = histLoad().slice(0, avoidN);
+  const s = new Set();
+  h.forEach(x => (x.keys || []).forEach(k => s.add(k)));
+  return s;
+}
+
+function loadAvoid(){
+  try {
+    const v = JSON.parse(localStorage.getItem(AKEY) || 'null');
+    if(v){ avoidOn = !!v.on; avoidN = v.n || 3; }
+  } catch(e){}
+}
+function saveAvoid(){
+  try { localStorage.setItem(AKEY, JSON.stringify({ on: avoidOn, n: avoidN })); } catch(e){}
+}
+function setAvoid(on){ avoidOn = on; saveAvoid(); drawHist(); refresh(); }
+function setAvoidN(n){ avoidN = n; saveAvoid(); drawHist(); refresh(); }
+
+function drawHist(){
+  const h = histLoad();
+  document.querySelectorAll('#avoidSeg .seg-btn').forEach(b =>
+    b.classList.toggle('on', (b.dataset.avoid === '1') === avoidOn));
+  document.querySelectorAll('#avoidNSeg .seg-btn').forEach(b =>
+    b.classList.toggle('on', +b.dataset.n === avoidN));
+  const box = document.getElementById('histInfo');
+  if(!box) return;
+  if(!h.length){
+    box.textContent = 'まだ記録はありません（印刷したテストが記録されます）';
+    return;
+  }
+  const r = recentKeys();
+  box.innerHTML = `記録 ${h.length} 回ぶん（最新 ${h[0].d}・番号 ${h[0].code}）` +
+    (avoidOn ? `<br>直近${avoidN}回の ${r.size} 大問をさけています` : '') +
+    ' <button class="lnk" onclick="histClear()">記録を消す</button>';
+}
+
+/** そのたねで選ばれる大問キー（DOMは作らない。重なりを調べるだけ） */
+function keysFor(seed, e, cnt){
+  const rng = mulberry32(seed ^ 0x9E3779B9);
+  const a = e.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a.slice(0, cnt).map(x => x.g.key);
+}
+
 function generate(seed){
-  if(seed === undefined || seed === null)
+  const e0 = eligible();
+  if(!e0.length) return;
+  const cnt0 = Math.min(e0.length,
+                        Math.max(1, parseInt(document.getElementById('cnt').value) || 1));
+  let avoided = 0;
+  if(seed === undefined || seed === null){
     seed = Math.floor(Math.random() * 1048576);        // 20bit
+    // 最近出した大問が入らないたねを探す。見つからなければあきらめて最初のたねを使う。
+    const rec = recentKeys();
+    if(rec.size){
+      for(let i = 0; i < 400; i++){
+        const c = (seed + i) % 1048576;
+        const ks = keysFor(c, e0, cnt0);
+        if(!ks.some(k => rec.has(k))){ seed = c; avoided = i; break; }
+        if(i === 399) avoided = -1;                     // さけきれなかった
+      }
+    }
+  }
   TESTCODE = makeCode(seed, settingsBits());
   RNG = mulberry32(seed ^ 0x9E3779B9);
   const e = eligible();
@@ -492,17 +617,28 @@ function generate(seed){
   }
   chosen = chosen.slice(0, cnt);
   if(!shuffleOn) chosen.sort((a, b) => GROUPS.indexOf(a.g) - GROUPS.indexOf(b.g));
+  LASTKEYS = chosen.map(x => x.g.key);
+  AVOIDFAIL = (avoided === -1);
 
   SHEET = chosen.map((x, i) => groupEl(x, i, lo, hi));
   ansShown = document.getElementById('withans').checked;
   howShown = document.getElementById('withhow').checked;
   syncBtns();
   document.getElementById('shCode').textContent = '番号 ' + TESTCODE;
+  const wb = document.getElementById('warnBar');
+  wb.style.display = AVOIDFAIL ? 'block' : 'none';
+  wb.textContent = '最近出した大問をさけきれませんでした（候補が足りません）。'
+                 + '「さける範囲」を減らすか、分野・回をひろげてください。';
   document.getElementById('ctrl').style.display = 'none';
   document.getElementById('sheet').style.display = 'block';
   applyAns(); applyHow(); applyRate();
   paginate();
   window.scrollTo(0, 0);
+}
+
+function printAndMark(){
+  if(TESTCODE && LASTKEYS.length) histAdd(TESTCODE, LASTKEYS);
+  window.print();
 }
 
 function figHtml(key, p){
@@ -683,6 +819,8 @@ buildRounds();
 buildTags();
 buildRates();
 setPaper('a3');
+loadAvoid();
+drawHist();
 refresh();
 </script>
 </body>
