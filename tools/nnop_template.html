@@ -413,7 +413,7 @@ function refresh(){
       e.map(x => `<span class="po">${ROUNDNAME[x.g.round]}</span>${x.g.title}：`
                  + `${x.subs.map(s => s.label || `${x.subs.length}問`).join('')}`).join('　/　');
   const cnt = document.getElementById('cnt');
-  cnt.max = Math.max(1, n);
+  cnt.max = Math.max(1, Math.min(15, n));      // 番号に入るのは15まで
   if(+cnt.value > n) cnt.value = Math.max(1, n);
   document.getElementById('genBtn').disabled = (n === 0);
   if(n && rec.size){
@@ -463,21 +463,23 @@ function mulberry32(a){
 function settingsBits(){
   const lo = +document.getElementById('lo').value / 10;
   const hi = +document.getElementById('hi').value / 10;
-  const cnt = Math.max(1, Math.min(63, parseInt(document.getElementById('cnt').value) || 1));
+  const cnt = Math.max(1, Math.min(15, parseInt(document.getElementById('cnt').value) || 1));
   let fb = 0, rb = 0;
   FIELDS.forEach(([k], i) => { if(sel.has(k)) fb |= 1 << i; });
-  ROUNDS.forEach((r, i) => { if(selR.has(r)) rb |= 1 << i; });
-  return lo | (hi << 4) | (cnt << 8) | ((shuffleOn ? 1 : 0) << 14) | (fb << 15) | (rb << 24);
+  // 回のビットは6つ目まで bit24〜29、7つ目・8つ目は bit13・bit12（もと問題数の上位）
+  let rx = 0;
+  ROUNDS.forEach((r, i) => { if(selR.has(r)){ if(i < 6) rb |= 1 << i; else rx |= 1 << (19 - i); } });
+  return lo | (hi << 4) | (cnt << 8) | rx | ((shuffleOn ? 1 : 0) << 14) | (fb << 15) | (rb << 24);
 }
 
 function applyBits(b){
   document.getElementById('lo').value = (b & 15) * 10;
   document.getElementById('hi').value = ((b >> 4) & 15) * 10;
-  document.getElementById('cnt').value = (b >> 8) & 63;
+  document.getElementById('cnt').value = (b >> 8) & 15;
   setOrder(!((b >> 14) & 1));
-  const fb = (b >> 15) & 511, rb = (b >> 24) & 63;
+  const fb = (b >> 15) & 511, rb = (b >> 24) & 63, rx = b;
   sel.clear();  FIELDS.forEach(([k], i) => { if(fb & (1 << i)) sel.add(k); });
-  selR.clear(); ROUNDS.forEach((r, i) => { if(rb & (1 << i)) selR.add(r); });
+  selR.clear(); ROUNDS.forEach((r, i) => { if(i < 6 ? (rb & (1 << i)) : (rx >> (19 - i)) & 1) selR.add(r); });
   buildTags(); buildRounds(); refresh();
 }
 

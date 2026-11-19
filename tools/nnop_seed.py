@@ -25,12 +25,16 @@ import nnop3_data as D3        # noqa: E402
 import nnop4_data as D4        # noqa: E402
 import nnop5_data as D5        # noqa: E402
 import nnop6_data as D6        # noqa: E402
+import nnop7_data as D7        # noqa: E402
 
-GROUPS = (D.GROUPS + D2.GROUPS2 + D3.GROUPS3 + D4.GROUPS4 + D5.GROUPS5 + D6.GROUPS6)
+GROUPS = (D.GROUPS + D2.GROUPS2 + D3.GROUPS3 + D4.GROUPS4 + D5.GROUPS5 +
+          D6.GROUPS6 + D7.GROUPS7)
 VARIANTS = {**D.VARIANTS, **D2.VARIANTS2, **D3.VARIANTS3,
-            **D4.VARIANTS4, **D5.VARIANTS5, **D6.VARIANTS6}
-ROUND_NAME = {1: '第1回', 2: '第2回', 3: '第3回', 'N': '夏期そっくり', 4: '第4回', 5: '第5回'}
-ROUND_ORDER = [1, 2, 3, 'N', 4, 5]
+            **D4.VARIANTS4, **D5.VARIANTS5, **D6.VARIANTS6,
+            **D7.VARIANTS7}
+ROUND_NAME = {1: '第1回', 2: '第2回', 3: '第3回', 'N': '夏期そっくり', 4: '第4回',
+              5: '第5回', 'Y1': '予想①'}
+ROUND_ORDER = [1, 2, 3, 'N', 4, 5, 'Y1']
 FIELDS = D.FIELDS
 
 C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
@@ -79,14 +83,26 @@ def make_code(seed, bits):
     return out[:5] + '-' + out[5:]
 
 
+def round_bit(i):
+    """回のビット位置。6つ目までは bit24〜29、7つ目・8つ目は bit13・bit12。
+
+    bit12/13 はもともと「問題数」の上位2ビットだったところ。問題数を1〜15に
+    しぼったので空いた（紙に入る数は多くても10問ほど）。こうすると、
+    **古い番号（問題数15以下・回は6つまで）はそのまま同じテストに戻る**。
+    9つ目の回を足すときは、番号を32進11文字にするなどの作りかえが要る。
+    """
+    return 24 + i if i < 6 else 19 - i          # i=6→13, i=7→12
+
+
 def unpack(bits):
     return {
         'lo': (bits & 15) * 10,
         'hi': ((bits >> 4) & 15) * 10,
-        'cnt': (bits >> 8) & 63,
+        'cnt': (bits >> 8) & 15,
         'shuffle': bool((bits >> 14) & 1),
         'fields': {k for i, (k, _) in enumerate(FIELDS) if (bits >> 15) & (1 << i)},
-        'rounds': {r for i, r in enumerate(ROUND_ORDER) if (bits >> 24) & (1 << i)},
+        'rounds': {r for i, r in enumerate(ROUND_ORDER)
+                   if (bits >> round_bit(i)) & 1},
     }
 
 

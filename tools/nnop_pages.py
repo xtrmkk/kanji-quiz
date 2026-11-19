@@ -106,6 +106,9 @@ def main(argv=None):
                     help='左列・右列を別々の画像にも出す')
     ap.add_argument('--page-mm', type=float, default=A3_H_MM,
                     help='用紙の縦mm（既定420＝A3）')
+    ap.add_argument('--rotate', type=int, default=0,
+                    help='ページを時計回りに回す角度（90/180/270）。'
+                         '横向きにスキャンされたページ用。右端に見出しがあるなら270')
     ap.add_argument('--list', action='store_true', help='ページ構成だけ表示して終わる')
     a = ap.parse_args(argv)
 
@@ -128,6 +131,8 @@ def main(argv=None):
     made = []
     for i in parse_pages(a.pages, doc.page_count):
         p = doc[i]
+        if a.rotate:
+            p.set_rotation((p.rotation + a.rotate) % 360)
         H = p.rect.height
         if a.full:
             y0, y1 = 0.0, H

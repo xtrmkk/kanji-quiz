@@ -28,14 +28,16 @@ import nnop5_data as D5        # noqa: E402
 import nnop5_verify as V5      # noqa: E402
 import nnop6_data as D6        # noqa: E402
 import nnop6_verify as V6      # noqa: E402
+import nnop7_data as D7        # noqa: E402
+import nnop7_verify as V7      # noqa: E402
 import nnop_fig as G           # noqa: E402
 
-ROUND_NAME = {1: '第1回', 2: '第2回', 3: '第3回', 'N': '夏期そっくり', 4: '第4回', 5: '第5回'}
-ROUND_ORDER = [1, 2, 3, 'N', 4, 5]
+ROUND_NAME = {1: '第1回', 2: '第2回', 3: '第3回', 'N': '夏期そっくり', 4: '第4回', 5: '第5回', 'Y1': '予想①'}
+ROUND_ORDER = [1, 2, 3, 'N', 4, 5, 'Y1']
 
-ALL_GROUPS = D.GROUPS + D2.GROUPS2 + D3.GROUPS3 + D4.GROUPS4 + D5.GROUPS5 + D6.GROUPS6
-ALL_VARIANTS = {**D.VARIANTS, **D2.VARIANTS2, **D3.VARIANTS3, **D4.VARIANTS4, **D5.VARIANTS5, **D6.VARIANTS6}
-ALL_WORK = {**D.WORK_MM, **D2.WORK_MM2, **D3.WORK_MM3, **D4.WORK_MM4, **D5.WORK_MM5, **D6.WORK_MM6}
+ALL_GROUPS = D.GROUPS + D2.GROUPS2 + D3.GROUPS3 + D4.GROUPS4 + D5.GROUPS5 + D6.GROUPS6 + D7.GROUPS7
+ALL_VARIANTS = {**D.VARIANTS, **D2.VARIANTS2, **D3.VARIANTS3, **D4.VARIANTS4, **D5.VARIANTS5, **D6.VARIANTS6, **D7.VARIANTS7}
+ALL_WORK = {**D.WORK_MM, **D2.WORK_MM2, **D3.WORK_MM3, **D4.WORK_MM4, **D5.WORK_MM5, **D6.WORK_MM6, **D7.WORK_MM7}
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -228,7 +230,7 @@ def regression(all_vs):
 # ══════════════════════════════════════════════════════════════════
 def build():
     all_vs = {g['key']: ALL_VARIANTS[g['key']]() for g in ALL_GROUPS}
-    verify = {**VERIFY, **V2.VERIFY2, **V3.VERIFY3, **V4.VERIFY4, **V5.VERIFY5, **V6.VERIFY6}
+    verify = {**VERIFY, **V2.VERIFY2, **V3.VERIFY3, **V4.VERIFY4, **V5.VERIFY5, **V6.VERIFY6, **V7.VERIFY7}
 
     print('― 独立検算 ―')
     for g in ALL_GROUPS:
@@ -242,6 +244,7 @@ def build():
     print(f'  夏期　 {regression_of(all_vs, V4.OFFICIAL4)} 大問すべて一致')
     print(f'  第4回 {regression_of(all_vs, V5.OFFICIAL5)} 大問すべて一致')
     print(f'  第5回 {regression_of(all_vs, V6.OFFICIAL6)} 大問すべて一致')
+    print(f'  予想① {regression_of(all_vs, V7.OFFICIAL7)} 大問すべて一致')
 
     # 図
     figs = {}
@@ -279,6 +282,18 @@ def build():
             G.dai_svg(q['W'], q['H'], q['e1'], q['e2'])
     for v in all_vs['R6']:
         figs[f'sieve:{v["p"]["N"]}'] = G.sieve_svg(v['p']['N'])
+
+    # 予想①
+    for v in all_vs['S3']:
+        q = v['p']
+        figs[f'cube:{q["n"]}-{q["k1"]}-{q["k2"]}'] = \
+            G.cube_svg(q['n'], q['k1'], q['k2'])
+    for v in all_vs['S5']:
+        figs[f'poly2:{v["p"]["n"]}'] = G.poly2_svg(v['p']['n'])
+    for v in all_vs['S6'] + all_vs['S6a']:
+        q = v['p']
+        figs[f'card:{q["ea"]}-{q["eb"]}-{q["ec"]}'] = \
+            G.cardfig_svg(q['ea'], q['eb'], q['ec'])
 
     # 図のキーがぜんぶ用意できているか（{…}を埋めてから照合する）
     for g in ALL_GROUPS:

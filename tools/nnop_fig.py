@@ -744,3 +744,186 @@ def sieve_svg(N: int, cols=6, show=8, cw=54.0, ch=17.0, pad=4) -> str:
         o.append(txt(cx(j) + cw / 2, cy(show + 2) + ch - 4, str(N - cols + j + 1)))
     o.append('</svg>')
     return ''.join(o)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 立方体の切断（予想①・大問3）
+#   奥の上辺 A—D を上に置き、手前の面 B—C—G—F を左下にずらした見取り図。
+#   各辺を n 等分した点を打ち、AD・DC・FG 上の k1 番目に I・J・K、
+#   k2 番目に L・M・N のラベルをつける。
+# ══════════════════════════════════════════════════════════════════
+def cube_svg(n: int, k1: int, k2: int, w=146.0, sx=52.0, sy=42.0, vh=128.0,
+             pad=20.0) -> str:
+    W = w + sx + pad * 2 + 16
+    H = vh + sy + pad * 2 + 12
+    ox, oy = pad + sx, pad + 10
+    A = (ox, oy)
+    D = (ox + w, oy)
+    B = (ox - sx, oy + sy)
+    C = (ox + w - sx, oy + sy)
+    E = (A[0], A[1] + vh)
+    Fp = (B[0], B[1] + vh)
+    G = (C[0], C[1] + vh)
+    Hp = (D[0], D[1] + vh)
+    ln = lambda p, q, dash='': (
+        f'<line x1="{p[0]:.2f}" y1="{p[1]:.2f}" x2="{q[0]:.2f}" y2="{q[1]:.2f}" '
+        f'stroke="#111" stroke-width="{LW if not dash else LW2}" {dash}/>')
+    DASH = 'stroke-dasharray="4,3"'
+    s = [f'<svg viewBox="0 0 {W:.0f} {H:.0f}" xmlns="http://www.w3.org/2000/svg" '
+         f'class="fig-svg">']
+    for p, q in ((A, D), (D, C), (C, B), (B, A),       # 上面
+                 (B, Fp), (C, G), (D, Hp),             # 見えている縦
+                 (Fp, G), (G, Hp)):                    # 下面の手前と右
+        s.append(ln(p, q))
+    for p, q in ((A, E), (E, Fp), (E, Hp)):            # かくれている辺
+        s.append(ln(p, q, DASH))
+    # 各辺の n 等分点（見えている辺にだけ打つ）
+    def pts(p, q):
+        return [(p[0] + (q[0] - p[0]) * i / n, p[1] + (q[1] - p[1]) * i / n)
+                for i in range(1, n)]
+    for p, q in ((A, D), (D, C), (C, B), (B, A), (B, Fp), (C, G), (D, Hp),
+                 (Fp, G), (G, Hp)):
+        for x, y in pts(p, q):
+            s.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="2.1" fill="#111"/>')
+    # ラベル
+    def put(p, q, k, name, dx, dy):
+        x = p[0] + (q[0] - p[0]) * k / n
+        y = p[1] + (q[1] - p[1]) * k / n
+        s.append(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="2.6" fill="#111"/>')
+        s.append(f'<text x="{x+dx:.1f}" y="{y+dy:.1f}" font-size="{FS}" '
+                 f'text-anchor="middle">{name}</text>')
+    for (k, (ni, nj, nk)), dy2 in (((k1, 'IJK'), -1), ((k2, 'LMN'), 13)):
+        put(A, D, k, ni, 0, -6)
+        put(D, C, k, nj, 12, dy2)           # J と M が重ならないよう上下に分ける
+        put(Fp, G, k, nk, 0, 14)
+    for p, nm, dx, dy in ((A, 'A', -10, -2), (B, 'B', -11, 3), (C, 'C', -6, -5),
+                          (D, 'D', 10, -2), (E, 'E', -11, 4), (Fp, 'F', -11, 4),
+                          (G, 'G', 1, 15), (Hp, 'H', 11, 4)):
+        s.append(f'<text x="{p[0]+dx:.1f}" y="{p[1]+dy:.1f}" font-size="{FS}" '
+                 f'text-anchor="middle">{nm}</text>')
+    s.append('</svg>')
+    return ''.join(s)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 2つ重ねた正n角形（予想①・大問5）
+#   右の正n角形（中心O・A が真上・C が真下・B は C のとなり・M は辺BCの中点）と、
+#   それを直線AMで鏡に映したもの。重ならない部分に斜線を引く。
+# ══════════════════════════════════════════════════════════════════
+def poly2_svg(n: int, R=86.0, pad=26.0) -> str:
+    W = H = (R + pad) * 2
+    cx = cy = R + pad
+    V = [(R * math.sin(2 * math.pi * k / n), R * math.cos(2 * math.pi * k / n))
+         for k in range(n)][::-1]
+    i0 = max(range(n), key=lambda i: V[i][1])           # 先頭を真上の頂点にする
+    V = V[i0:] + V[:i0]
+    A, C, B = V[0], V[n // 2], V[n // 2 - 1]      # B は C の左どなり
+    M = ((B[0] + C[0]) / 2, (B[1] + C[1]) / 2)
+    dx, dy = M[0] - A[0], M[1] - A[1]
+    dl = math.hypot(dx, dy)
+    dx, dy = dx / dl, dy / dl
+
+    def mir(p):
+        vx, vy = p[0] - A[0], p[1] - A[1]
+        t = vx * dx + vy * dy
+        return (A[0] + 2 * t * dx - vx, A[1] + 2 * t * dy - vy)
+
+    Wv = [mir(p) for p in V]
+    pt = lambda p: _p(p[0], p[1], cx, cy)
+    path = lambda P: 'M ' + ' L '.join(pt(p) for p in P) + ' Z'
+    hid = f'hx{n}'
+    s = [f'<svg viewBox="0 0 {W:.0f} {H:.0f}" xmlns="http://www.w3.org/2000/svg" '
+         f'class="fig-svg">',
+         f'<defs><pattern id="{hid}" width="7" height="7" patternUnits="userSpaceOnUse" '
+         f'patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" '
+         f'stroke="#111" stroke-width="1"/></pattern></defs>',
+         # 重ならない部分だけを塗る（evenodd）
+         f'<path d="{path(V)} {path(Wv)}" fill="url(#{hid})" fill-rule="evenodd" '
+         f'stroke="none"/>',
+         f'<path d="{path(V)}" fill="none" stroke="#111" stroke-width="{LW}"/>',
+         f'<path d="{path(Wv)}" fill="none" stroke="#111" stroke-width="{LW}"/>']
+    for p, q in ((A, B), (A, C), (A, M), ((0, 0), B), ((0, 0), C)):
+        s.append(f'<line x1="{cx+p[0]:.2f}" y1="{cy-p[1]:.2f}" '
+                 f'x2="{cx+q[0]:.2f}" y2="{cy-q[1]:.2f}" stroke="#111" '
+                 f'stroke-width="{LW2}"/>')
+    for p, nm, ddx, ddy in ((A, 'A', 0, -7), (B, 'B', -12, -2), (C, 'C', 9, 13),
+                            (M, 'M', -2, 15), ((0, 0), 'O', 11, 4)):
+        s.append(f'<circle cx="{cx+p[0]:.2f}" cy="{cy-p[1]:.2f}" r="2.3" fill="#111"/>')
+        s.append(f'<text x="{cx+p[0]+ddx:.1f}" y="{cy-p[1]+ddy+4:.1f}" '
+                 f'font-size="{FS}" text-anchor="middle">{nm}</text>')
+    s.append('</svg>')
+    return ''.join(s)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 6枚のカード（予想①・大問6）
+# ══════════════════════════════════════════════════════════════════
+def _card(x, y, k, back, cw=26.0, ch=30.0):
+    if back:
+        return (f'<rect x="{x:.1f}" y="{y:.1f}" width="{cw}" height="{ch}" '
+                f'fill="#111" stroke="#111" stroke-width="{LW2}"/>'
+                f'<text x="{x+cw/2:.1f}" y="{y+ch/2+5:.1f}" font-size="{FS+3}" '
+                f'fill="#fff" text-anchor="middle">{k}</text>')
+    return (f'<rect x="{x:.1f}" y="{y:.1f}" width="{cw}" height="{ch}" '
+            f'fill="#fff" stroke="#111" stroke-width="{LW2}"/>'
+            f'<text x="{x+cw/2:.1f}" y="{y+ch/2+5:.1f}" font-size="{FS+3}" '
+            f'text-anchor="middle">{k}</text>')
+
+
+def cards_svg(m=6, cw=26.0, ch=30.0, gap=6.0, pad=6.0) -> str:
+    lw = 26.0
+    W = pad * 2 + lw + m * cw + (m - 1) * gap
+    H = pad * 2 + ch * 2 + 14
+    s = [f'<svg viewBox="0 0 {W:.0f} {H:.0f}" xmlns="http://www.w3.org/2000/svg" '
+         f'class="fig-svg">']
+    for row, (nm, back) in enumerate((('表', False), ('裏', True))):
+        y = pad + row * (ch + 14)
+        s.append(f'<text x="{pad:.1f}" y="{y+ch/2+5:.1f}" font-size="{FS}">{nm}</text>')
+        for i in range(m):
+            s.append(_card(pad + lw + i * (cw + gap), y, i + 1, back, cw, ch))
+    s.append('</svg>')
+    return ''.join(s)
+
+
+def cardex_svg(states, labels, m=6, cw=24.0, ch=27.0, gap=5.0, pad=4.0) -> str:
+    """states は「裏になっているカードの集合」を順に並べたもの。"""
+    lw = 84.0
+    W = pad * 2 + lw + m * cw + (m - 1) * gap
+    H = pad * 2 + len(states) * (ch + 7)
+    s = [f'<svg viewBox="0 0 {W:.0f} {H:.0f}" xmlns="http://www.w3.org/2000/svg" '
+         f'class="fig-svg">']
+    for row, (st, nm) in enumerate(zip(states, labels)):
+        y = pad + row * (ch + 7)
+        s.append(f'<text x="{pad:.1f}" y="{y+ch/2+4:.1f}" font-size="{FS-1}">{nm}</text>')
+        for i in range(m):
+            s.append(_card(pad + lw + i * (cw + gap), y, i + 1, (i + 1) in st, cw, ch))
+    s.append('</svg>')
+    return ''.join(s)
+
+
+def cardfig_svg(ea: int, eb: int, ec: int, m=6) -> str:
+    """表・裏の見本と、例（1回目ea・2回目eb・3回目ec）の移り変わりを1枚にする。"""
+    import nnop7_data as D7
+    st = [set()]
+    for f in (D7.op1(ea, m), D7.op2(eb, m), D7.op3(ec, m)):
+        st.append(st[-1] ^ set(f))
+    cw, ch, gap, pad, lw = 24.0, 27.0, 5.0, 4.0, 84.0
+    W = pad * 2 + lw + m * cw + (m - 1) * gap
+    rows = [('表', set()), ('裏', set(range(1, m + 1))), None,
+            ('はじめ', st[0]), ('〈操作1〉の後', st[1]),
+            ('〈操作2〉の後', st[2]), ('〈操作3〉の後', st[3])]
+    H = pad * 2 + sum(14 if r is None else ch + 7 for r in rows)
+    s = [f'<svg viewBox="0 0 {W:.0f} {H:.0f}" xmlns="http://www.w3.org/2000/svg" '
+         f'class="fig-svg">']
+    y = pad
+    for r in rows:
+        if r is None:
+            y += 14
+            continue
+        nm, back = r
+        s.append(f'<text x="{pad:.1f}" y="{y+ch/2+4:.1f}" font-size="{FS-1}">{nm}</text>')
+        for i in range(m):
+            s.append(_card(pad + lw + i * (cw + gap), y, i + 1, (i + 1) in back, cw, ch))
+        y += ch + 7
+    s.append('</svg>')
+    return ''.join(s)
