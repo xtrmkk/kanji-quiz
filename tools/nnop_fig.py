@@ -927,3 +927,154 @@ def cardfig_svg(ea: int, eb: int, ec: int, m=6) -> str:
         y += ch + 7
     s.append('</svg>')
     return ''.join(s)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 材料の表（予想②・大問1）
+#   製品A・Bを1個作るのに必要な材料C・Dの量
+# ══════════════════════════════════════════════════════════════════
+def mat_svg(cA: int, cB: int, dA: int, dB: int,
+            w0=74.0, w1=62.0, ch=23.0, pad=3.0) -> str:
+    W = w0 + w1 * 2 + pad * 2
+    H = ch * 3 + pad * 2
+    cx = lambda j: pad + (0 if j == 0 else w0 + w1 * (j - 1))
+    wj = lambda j: w0 if j == 0 else w1
+    o = [f'<svg viewBox="0 0 {W:.0f} {H:.0f}" xmlns="http://www.w3.org/2000/svg" '
+         f'class="fig-svg">',
+         f'<rect x="{pad}" y="{pad}" width="{w0 + w1 * 2:.1f}" height="{ch * 3:.1f}" '
+         f'fill="none" stroke="#111" stroke-width="{LW}"/>']
+    for i in (1, 2):
+        o.append(f'<line x1="{pad}" y1="{pad + ch * i:.1f}" x2="{pad + w0 + w1 * 2:.1f}" '
+                 f'y2="{pad + ch * i:.1f}" stroke="#111" stroke-width="{LW2}"/>')
+    for j in (1, 2):
+        o.append(f'<line x1="{cx(j):.1f}" y1="{pad}" x2="{cx(j):.1f}" '
+                 f'y2="{pad + ch * 3:.1f}" stroke="#111" stroke-width="{LW2}"/>')
+    cells = [['', '製品A', '製品B'],
+             ['材料C', f'{cA} g', f'{cB} g'],
+             ['材料D', f'{dA} g', f'{dB} g']]
+    for i, row in enumerate(cells):
+        for j, t in enumerate(row):
+            if not t:
+                continue
+            o.append(f'<text x="{cx(j) + wj(j) / 2:.1f}" y="{pad + ch * i + ch - 7:.1f}" '
+                     f'font-size="{FS}" text-anchor="middle">{t}</text>')
+    o.append('</svg>')
+    return ''.join(o)
+
+
+# ══════════════════════════════════════════════════════════════════
+# 正六角形まわりの3枚（予想②・大問2）
+#   図1 正六角形と二等辺三角形ABC（頂角120°・底辺は1辺）
+#   図2 AD∥BC、AB＝AC＝AD、∠BAC＝120° の四角形ABCD
+#   図3 正六角形ABCDEFと、15°の線6本でできる内側の正六角形PQRSTU
+#   どれも数値が変わらない（18倍・15度・2/3倍しか成り立たない）ので引数は無い。
+# ══════════════════════════════════════════════════════════════════
+def _h3_txt(x, y, t, anchor='middle', size=None):
+    return (f'<text x="{x:.1f}" y="{y:.1f}" font-size="{size or FS}" '
+            f'text-anchor="{anchor}">{t}</text>')
+
+
+def _h3_line(p, q, lw=None):
+    return (f'<line x1="{p[0]:.2f}" y1="{p[1]:.2f}" x2="{q[0]:.2f}" y2="{q[1]:.2f}" '
+            f'stroke="#111" stroke-width="{lw or LW2}"/>')
+
+
+def _h3_tick(p, q, n=1, h=4.0, gap=3.4):
+    """線分pqの真ん中に、線に直交する短い印をn本引く。"""
+    mx, my = (p[0] + q[0]) / 2, (p[1] + q[1]) / 2
+    dx, dy = q[0] - p[0], q[1] - p[1]
+    L = math.hypot(dx, dy)
+    ux, uy = dx / L, dy / L
+    out = []
+    for i in range(n):
+        t = (i - (n - 1) / 2) * gap
+        bx, by = mx + ux * t, my + uy * t
+        out.append(_h3_line((bx - uy * h, by + ux * h), (bx + uy * h, by - ux * h), LW2))
+    return ''.join(out)
+
+
+def _h3_arc(c, p, q, r=13.0):
+    """点cを中心に、cpの向きからcqの向きへ小さい弧を描く。"""
+    a1 = math.atan2(p[1] - c[1], p[0] - c[0])
+    a2 = math.atan2(q[1] - c[1], q[0] - c[0])
+    d = (a2 - a1) % (2 * math.pi)
+    sweep = 1 if d <= math.pi else 0
+    x1, y1 = c[0] + r * math.cos(a1), c[1] + r * math.sin(a1)
+    x2, y2 = c[0] + r * math.cos(a2), c[1] + r * math.sin(a2)
+    return (f'<path d="M {x1:.2f},{y1:.2f} A {r:.1f},{r:.1f} 0 0 {sweep} '
+            f'{x2:.2f},{y2:.2f}" fill="none" stroke="#111" stroke-width="{LW2}"/>')
+
+
+def hex3_svg(Rr=52.0, panel=150.0, H=152.0) -> str:
+    """図1・図2・図3を横に3枚並べた1枚のSVG。"""
+    s = [f'<svg viewBox="0 0 {panel * 3:.0f} {H:.0f}" '
+         f'xmlns="http://www.w3.org/2000/svg" class="fig-svg">']
+    deg = lambda a: math.radians(a)
+    pol = lambda c, r, a: (c[0] + r * math.cos(deg(a)), c[1] - r * math.sin(deg(a)))
+
+    # ── 図1 ───────────────────────────────────────────────
+    c1 = (panel * 0.5, 84.0)
+    hexa = [pol(c1, Rr, 90 + 60 * k) for k in range(6)]      # 90,150,…（上が頂点）
+    s.append(_h3_txt(14, 18, '図1'))
+    s.append('<path d="M ' + ' L '.join(f'{p[0]:.2f},{p[1]:.2f}' for p in hexa) +
+             f' Z" fill="none" stroke="#111" stroke-width="{LW}"/>')
+    for k in range(3):                                        # 対角線3本
+        s.append(_h3_line(hexa[k], hexa[k + 3]))
+    B1, C1 = hexa[2], hexa[3]                                 # 210°と270°の頂点
+    A1 = pol(c1, Rr / math.sqrt(3), 240)
+    for p in (B1, C1, c1):
+        s.append(_h3_line(A1, p, LW))
+    s.append(_h3_tick(A1, B1))
+    s.append(_h3_tick(A1, C1))
+    s.append(_h3_arc(A1, B1, C1, 11))
+    s.append(_h3_txt(A1[0] - 25, A1[1] + 28, '120°', size=FS - 1))
+    for p, nm, dx, dy in ((A1, 'A', 13, -3), (B1, 'B', -11, 2), (C1, 'C', 0, 14)):
+        s.append(f'<circle cx="{p[0]:.2f}" cy="{p[1]:.2f}" r="2.2" fill="#111"/>')
+        s.append(_h3_txt(p[0] + dx, p[1] + dy + 4, nm))
+
+    # ── 図2 ───────────────────────────────────────────────
+    s.append(_h3_txt(panel + 14, 18, '図2'))
+    base = 96.0
+    B2 = (panel + 22.0, 104.0)
+    C2 = (B2[0] + base, B2[1])
+    A2 = (B2[0] + base / 2, B2[1] - base / (2 * math.sqrt(3)))
+    D2 = (A2[0] + base / math.sqrt(3), A2[1])
+    for p, q in ((A2, B2), (B2, C2), (C2, D2), (D2, A2), (A2, C2), (B2, D2)):
+        s.append(_h3_line(p, q, LW if (p, q) != (A2, C2) and (p, q) != (B2, D2) else LW2))
+    for p, q in ((A2, B2), (A2, C2), (A2, D2)):
+        s.append(_h3_tick(p, q))
+    s.append(_h3_arc(A2, B2, C2, 12))
+    s.append(_h3_txt(A2[0] - 26, A2[1] - 6, '120°', size=FS - 1))
+    for p, q in ((A2, D2), (B2, C2)):                         # 平行の印
+        mx, my = (p[0] + q[0]) / 2, (p[1] + q[1]) / 2
+        s.append(f'<path d="M {mx - 3:.1f},{my - 4:.1f} L {mx + 3:.1f},{my:.1f} '
+                 f'L {mx - 3:.1f},{my + 4:.1f}" fill="none" stroke="#111" '
+                 f'stroke-width="{LW2}"/>')
+    for p, nm, dx, dy in ((A2, 'A', -4, -9), (B2, 'B', -11, 4), (C2, 'C', 2, 15),
+                          (D2, 'D', 11, -5)):
+        s.append(f'<circle cx="{p[0]:.2f}" cy="{p[1]:.2f}" r="2.2" fill="#111"/>')
+        s.append(_h3_txt(p[0] + dx, p[1] + dy + 4, nm))
+
+    # ── 図3 ───────────────────────────────────────────────
+    s.append(_h3_txt(panel * 2 + 14, 18, '図3'))
+    c3 = (panel * 2.5, 84.0)
+    out = [pol(c3, Rr, 90 + 60 * k) for k in range(6)]        # A,B,C,D,E,F
+    rin = Rr * math.sqrt(2 / 3)
+    ins = [pol(c3, rin, 105 + 60 * k) for k in range(6)]      # P,Q,R,S,T,U
+    s.append('<path d="M ' + ' L '.join(f'{p[0]:.2f},{p[1]:.2f}' for p in out) +
+             f' Z" fill="none" stroke="#111" stroke-width="{LW}"/>')
+    for k in range(6):                                        # 頂点→内側2つ（一直線）
+        s.append(_h3_line(out[k], ins[(k + 1) % 6], LW))
+    s.append(_h3_arc(out[1], out[2], ins[1], 15))             # Bのところの15°
+    s.append(_h3_txt(out[1][0] - 20, out[1][1] - 8, '15°', size=FS - 1))
+    for p, nm, dx, dy in ((out[0], 'A', 0, -10), (out[1], 'B', -12, -1),
+                          (out[2], 'C', -12, 5), (out[3], 'D', 0, 15),
+                          (out[4], 'E', 12, 5), (out[5], 'F', 12, -1)):
+        s.append(_h3_txt(p[0] + dx, p[1] + dy + 4, nm))
+    for p, nm, dx, dy in ((ins[0], 'P', 4, 11), (ins[1], 'Q', 10, 7),
+                          (ins[2], 'R', 11, -3), (ins[3], 'S', -3, -8),
+                          (ins[4], 'T', -11, -4), (ins[5], 'U', -10, 7)):
+        s.append(f'<circle cx="{p[0]:.2f}" cy="{p[1]:.2f}" r="2.0" fill="#111"/>')
+        s.append(_h3_txt(p[0] + dx, p[1] + dy + 4, nm, size=FS - 1))
+    s.append('</svg>')
+    return ''.join(s)

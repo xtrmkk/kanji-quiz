@@ -16,7 +16,7 @@ public/            ← これがサイトそのもの（Cloudflareはここを�
   index.html         トップ（3つのカード）
   shakai/index.html  社会テスト      全736問
   rika/index.html    理科テスト      全720問
-  nnop/index.html    NNOP算数        7回分111問
+  nnop/index.html    NNOP算数        8回分126問
 tools/             ← ビルドスクリプトと問題データ
 old_flask/         ← Renderで動かしていたころの一式（今は使っていない）
 wrangler.jsonc     ← Cloudflareの配信設定
@@ -32,7 +32,7 @@ nnop_spec.md       ← NNOP算数の設計と「新しい回を足す手順」
 | 理科 | `python3 tools/build_rika.py` |
 | NNOP算数 | `python3 tools/build_nnop.py` |
 
-NNOP算数のビルドは、独立検算と7回分の回帰テストが通らないと出力されない。
+NNOP算数のビルドは、独立検算と8回分の回帰テストが通らないと出力されない。
 
 ## テストの通し番号と採点
 

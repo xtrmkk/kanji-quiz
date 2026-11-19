@@ -30,14 +30,16 @@ import nnop6_data as D6        # noqa: E402
 import nnop6_verify as V6      # noqa: E402
 import nnop7_data as D7        # noqa: E402
 import nnop7_verify as V7      # noqa: E402
+import nnop8_data as D8        # noqa: E402
+import nnop8_verify as V8      # noqa: E402
 import nnop_fig as G           # noqa: E402
 
-ROUND_NAME = {1: '第1回', 2: '第2回', 3: '第3回', 'N': '夏期そっくり', 4: '第4回', 5: '第5回', 'Y1': '予想①'}
-ROUND_ORDER = [1, 2, 3, 'N', 4, 5, 'Y1']
+ROUND_NAME = {1: '第1回', 2: '第2回', 3: '第3回', 'N': '夏期そっくり', 4: '第4回', 5: '第5回', 'Y1': '予想①', 'Y2': '予想②'}
+ROUND_ORDER = [1, 2, 3, 'N', 4, 5, 'Y1', 'Y2']
 
-ALL_GROUPS = D.GROUPS + D2.GROUPS2 + D3.GROUPS3 + D4.GROUPS4 + D5.GROUPS5 + D6.GROUPS6 + D7.GROUPS7
-ALL_VARIANTS = {**D.VARIANTS, **D2.VARIANTS2, **D3.VARIANTS3, **D4.VARIANTS4, **D5.VARIANTS5, **D6.VARIANTS6, **D7.VARIANTS7}
-ALL_WORK = {**D.WORK_MM, **D2.WORK_MM2, **D3.WORK_MM3, **D4.WORK_MM4, **D5.WORK_MM5, **D6.WORK_MM6, **D7.WORK_MM7}
+ALL_GROUPS = D.GROUPS + D2.GROUPS2 + D3.GROUPS3 + D4.GROUPS4 + D5.GROUPS5 + D6.GROUPS6 + D7.GROUPS7 + D8.GROUPS8
+ALL_VARIANTS = {**D.VARIANTS, **D2.VARIANTS2, **D3.VARIANTS3, **D4.VARIANTS4, **D5.VARIANTS5, **D6.VARIANTS6, **D7.VARIANTS7, **D8.VARIANTS8}
+ALL_WORK = {**D.WORK_MM, **D2.WORK_MM2, **D3.WORK_MM3, **D4.WORK_MM4, **D5.WORK_MM5, **D6.WORK_MM6, **D7.WORK_MM7, **D8.WORK_MM8}
 
 
 # ══════════════════════════════════════════════════════════════════
@@ -230,7 +232,7 @@ def regression(all_vs):
 # ══════════════════════════════════════════════════════════════════
 def build():
     all_vs = {g['key']: ALL_VARIANTS[g['key']]() for g in ALL_GROUPS}
-    verify = {**VERIFY, **V2.VERIFY2, **V3.VERIFY3, **V4.VERIFY4, **V5.VERIFY5, **V6.VERIFY6, **V7.VERIFY7}
+    verify = {**VERIFY, **V2.VERIFY2, **V3.VERIFY3, **V4.VERIFY4, **V5.VERIFY5, **V6.VERIFY6, **V7.VERIFY7, **V8.VERIFY8}
 
     print('― 独立検算 ―')
     for g in ALL_GROUPS:
@@ -245,6 +247,7 @@ def build():
     print(f'  第4回 {regression_of(all_vs, V5.OFFICIAL5)} 大問すべて一致')
     print(f'  第5回 {regression_of(all_vs, V6.OFFICIAL6)} 大問すべて一致')
     print(f'  予想① {regression_of(all_vs, V7.OFFICIAL7)} 大問すべて一致')
+    print(f'  予想② {regression_of(all_vs, V8.OFFICIAL8)} 大問すべて一致')
 
     # 図
     figs = {}
@@ -294,6 +297,12 @@ def build():
         q = v['p']
         figs[f'card:{q["ea"]}-{q["eb"]}-{q["ec"]}'] = \
             G.cardfig_svg(q['ea'], q['eb'], q['ec'])
+
+    # 予想②
+    for v in all_vs['T1']:
+        q = v['p']
+        figs[f'mat:{q["fg"]}'] = G.mat_svg(q['cA'], q['cB'], q['dA'], q['dB'])
+    figs['hex3'] = G.hex3_svg()
 
     # 図のキーがぜんぶ用意できているか（{…}を埋めてから照合する）
     for g in ALL_GROUPS:

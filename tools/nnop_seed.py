@@ -26,15 +26,16 @@ import nnop4_data as D4        # noqa: E402
 import nnop5_data as D5        # noqa: E402
 import nnop6_data as D6        # noqa: E402
 import nnop7_data as D7        # noqa: E402
+import nnop8_data as D8        # noqa: E402
 
 GROUPS = (D.GROUPS + D2.GROUPS2 + D3.GROUPS3 + D4.GROUPS4 + D5.GROUPS5 +
-          D6.GROUPS6 + D7.GROUPS7)
+          D6.GROUPS6 + D7.GROUPS7 + D8.GROUPS8)
 VARIANTS = {**D.VARIANTS, **D2.VARIANTS2, **D3.VARIANTS3,
             **D4.VARIANTS4, **D5.VARIANTS5, **D6.VARIANTS6,
-            **D7.VARIANTS7}
+            **D7.VARIANTS7, **D8.VARIANTS8}
 ROUND_NAME = {1: '第1回', 2: '第2回', 3: '第3回', 'N': '夏期そっくり', 4: '第4回',
-              5: '第5回', 'Y1': '予想①'}
-ROUND_ORDER = [1, 2, 3, 'N', 4, 5, 'Y1']
+              5: '第5回', 'Y1': '予想①', 'Y2': '予想②'}
+ROUND_ORDER = [1, 2, 3, 'N', 4, 5, 'Y1', 'Y2']
 FIELDS = D.FIELDS
 
 C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
