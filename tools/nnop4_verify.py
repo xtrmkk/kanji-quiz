@@ -228,8 +228,11 @@ def verify_n6(vs):
         # 表に隠した4つが本文の答と同じ順番か
         assert v['p']['hide'] == ','.join(str(x) for x in cl)
         for n in range(1, 16):
-            cell = D4.improper_html(F(n, 13))
+            cell = f'<span class="fr"><span class="fn">{n}</span><span class="fd">13</span></span>'
             assert cell in v['p']['table'], (n,)
+        # 13/13 は「1」（約分して 1/1＝0 と出していた不具合の再発防止）
+        assert ('<span class="fn">13</span><span class="fd">13</span></span>'
+                '<span class="eq">＝</span>1</td>') in v['p']['table']
     return len(vs)
 
 

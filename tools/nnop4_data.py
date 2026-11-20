@@ -293,8 +293,11 @@ def n6_table(hide):
     for n in range(1, 16):
         f = F(n, Q13)
         body = (f'<b>{mark[n]}</b>' if n in mark
-                else (str(f.numerator // Q13) if f.denominator == 1 else dec_html(f)))
-        cells.append(f'<td>{improper_html(F(n, Q13))}<span class="eq">＝</span>'
+                else (str(n // Q13) if f.denominator == 1 else dec_html(f)))
+        # 13/13 を 1/1 に約分して出さない（分母13のまま見せる）
+        frac = (f'<span class="fr"><span class="fn">{n}</span>'
+                f'<span class="fd">{Q13}</span></span>')
+        cells.append(f'<td>{frac}<span class="eq">＝</span>'
                      f'{body}</td>')
     rows = []
     for r in range(5):
