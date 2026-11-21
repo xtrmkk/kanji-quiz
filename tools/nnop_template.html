@@ -66,7 +66,9 @@ select{flex:1;padding:10px 12px;border:1.5px solid #e2e8f0;border-radius:10px;
 #sheet{display:none;padding:14px 16px 20px}
 .sh-head{display:flex;justify-content:space-between;align-items:flex-end;
          border-bottom:2px solid #111;padding-bottom:5px;margin-bottom:9px}
-.sh-title{font-size:15px;font-weight:bold}
+.sh-title{font-size:15px;font-weight:bold;white-space:nowrap}
+.sh-meta{flex:1;text-align:center;line-height:1.9}
+.sh-meta .nw{display:inline-block;white-space:nowrap}
 .sh-meta{font-size:10.5px;letter-spacing:.02em}
 .sh-code{font-size:22px;font-weight:700;letter-spacing:.12em;color:#000;margin-left:10px;
   font-family:"SF Mono",Menlo,monospace;white-space:nowrap;
@@ -296,7 +298,7 @@ body.a4{--paperw:210mm;--paperh:297mm;--mgv:16mm;--mgh:14mm;
 <div id="sheet">
   <div class="sh-head" id="shHead">
     <span class="sh-title" id="shTitle">NNOP算数テスト</span>
-    <span class="sh-meta">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿　点＿＿＿</span>
+    <span class="sh-meta"><span class="nw">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿</span>　<span class="nw">点＿＿＿／<b id="shFull">　</b>点　得点率＿＿＿％</span></span>
     <span class="sh-code" id="shCode"></span>
   </div>
   <div class="warnbar" id="warnBar" style="display:none"></div>
@@ -626,6 +628,8 @@ function generate(seed){
   howShown = document.getElementById('withhow').checked;
   syncBtns();
   document.getElementById('shCode').textContent = '番号 ' + TESTCODE;
+  document.getElementById('shFull').textContent =
+    chosen.reduce((a, x) => a + x.subs.reduce((b, s) => b + s.score, 0), 0);
   const wb = document.getElementById('warnBar');
   wb.style.display = AVOIDFAIL ? 'block' : 'none';
   wb.textContent = '最近出した大問をさけきれませんでした（候補が足りません）。'
