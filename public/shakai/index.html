@@ -86,20 +86,25 @@ input[type=number]:focus{outline:none;border-color:#8b9ae0}
 
 .q,.qgroup{break-inside:avoid;page-break-inside:avoid;
    display:flow-root;width:100%}
-.q{padding:6px 0 8px;border-bottom:1px dotted #c8c8c8;margin-bottom:2px}
+.q{padding:3mm 0 3.5mm;border-bottom:1px dotted #c8c8c8;margin-bottom:0}
 /* 位置参照のある問題どうしは1つの塊にして列またぎを防ぐ（「上の地図」が成立する） */
 .qgroup>.q:not(:last-child){border-bottom:1px dotted #e8e8e8}
 
-.q-body{font-size:9.4px;line-height:1.62;text-align:justify}
-.q-num{font-weight:bold;font-size:9.6px;margin-right:.4em}
+/* 見出し行：問番号（大きく太く）・元の番号（小さく）・時代・採点の○×枠 */
+.q-head{display:flex;align-items:center;gap:6px;margin-bottom:1.5mm}
+.q-no{font-weight:bold;font-size:15px}
+.q-src{font-size:10.5px;color:#888}
+.mk{margin-left:auto;width:7mm;height:7mm;border:1px solid #999;border-radius:1mm;flex:none}
+/* 本文は約10pt（以前は約7pt） */
+.q-body{font-size:13.5px;line-height:1.62;text-align:justify}
 
 .box{border:1px dotted #999;padding:4px 6px;margin:4px 0;line-height:1.62}
-.note{font-size:8.4px;color:#666;margin-top:2px}
+.note{font-size:11px;color:#666;margin-top:2px}
 /* 史料の引用ブロック */
 .shiryo{border:1px solid #444;padding:5px 7px;margin:3px 0 5px;line-height:1.7;
         background:#fbfbfb;text-indent:1em}
 .shiryo b{font-weight:bold}
-.era{font-size:8.6px;color:#555;margin-left:.4em}
+.era{font-size:11px;color:#555}
 
 /* 図まわり ── 文字と重ならないよう余白を確保 */
 .fig{margin:8px 0 7px;text-align:center;clear:both}
@@ -107,16 +112,17 @@ input[type=number]:focus{outline:none;border-color:#8b9ae0}
 .fig-r{float:right;margin:2px 0 8px 11px;text-align:center;max-width:40%}
 .fig-r img{max-width:100%;height:auto;display:block}
 
-.ans{margin-top:8px;padding-top:2px;display:flex;flex-wrap:wrap;gap:5px 12px;clear:both}
-.ai{font-size:9px;display:flex;align-items:flex-end;gap:3px;white-space:nowrap}
-.al{display:inline-block;min-width:86px;border-bottom:1px solid #333;height:13px;
-    text-align:center;font-size:9px;line-height:13px}
+.ans{margin-top:2.5mm;display:flex;flex-wrap:wrap;gap:2mm 5mm;clear:both}
+.ai{font-size:12.5px;display:flex;align-items:flex-end;gap:4px;white-space:nowrap}
+/* 解答欄：手書きの字が入る高さ7mm。幅は答えの長さから決める（blankMM） */
+.al{display:inline-block;border-bottom:1px solid #333;height:7mm;
+    text-align:center;font-size:13px;line-height:7mm}
 .al.show{color:#c00}
 /* 答えが分かれる問題：欄ごとに小さな名前をつける */
-.ai.multi{gap:2px}
-.pl{font-size:7.8px;color:#333;margin-left:5px;align-self:flex-end;line-height:13px}
-.al.nm{min-width:64px}
-.al.sym{min-width:24px}
+/* 欄が段の幅に入りきらないときは、欄の名前と欄をひと組にして次の行へ回す */
+.ai.multi{gap:1mm 0;flex-wrap:wrap;white-space:normal;max-width:100%}
+.pp{display:inline-flex;align-items:flex-end;gap:3px;white-space:nowrap}
+.pl{font-size:11px;color:#333;margin-left:6px;align-self:flex-end;line-height:7mm}
 /* 問いの部分（都道府県名を／記号で答えなさい）に波線 */
 .wv{text-decoration:underline wavy #000;text-decoration-thickness:1px;text-underline-offset:2px}
 
@@ -214,7 +220,7 @@ const RANGES=[{"key": "chiri", "label": "地理", "name": "地理すべて", "ra
        箱3以上（日を空けて2回以上つづけて正解）を「定着」とよぶ
        採点待ち …… 採点するまで出さない。ただし印刷から7日たっても採点がなければ無視する
    ・新しいテストは次の順で埋める（参照先といっしょに出す問題は、まとまりごと）
-       1. 復習日が来た問題（✗・△ が先、次に予定日の古い順）… 問題数の7割まで
+       1. 復習日が来た問題（✗・△ が先、次に予定日の古い順）… 問題数の25%まで
        2. まだ一度も出ていない問題（ランダム）
        3. 復習日が来た問題の残り
        4. まだ復習日の来ていない問題（予定日の近い順）・採点待ちの問題 … 画面に注意を出す
@@ -235,6 +241,16 @@ const RANGES=[{"key": "chiri", "label": "地理", "name": "地理すべて", "ra
      pickSection(key) 節の行をタップしたとき、その節を出題範囲にする
      replay(list, title, code, redo)   この並びでテストを作り直す（redo=解き直し用紙）
 */
+/* 解答欄の幅（mm）を答えの文字数から決める。手書きで1字約5mm（英数字は約2.8mm）＋余裕8mm。
+   答えがわからない欄は dflt、範囲は lo〜hi にそろえる。 */
+function blankMM(a, dflt, lo, hi){
+  const t = String(a == null ? '' : a).replace(/<[^>]*>/g, '').replace(/（[^）]*）/g, '');
+  if(!t) return dflt || 40;
+  let w = 0;
+  for(const c of t) w += /[\x00-\x7f]/.test(c) ? 2.8 : 5;
+  return Math.round(Math.max(lo || 18, Math.min(hi || 78, w + 8)));
+}
+
 function makeHist(o){
   const TKEY = o.subj + '.tests', OKEY = o.subj + '.opt';
   const C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -242,7 +258,7 @@ function makeHist(o){
   const IV = [1, 3, 7, 14, 28, 56];   // 箱ごとの次の出題までの日数
   const SOLID = 3;                    // この箱から「定着」
   const PEND_DAYS = 7;                // 採点待ちを待つ日数
-  const DUE_SHARE = 0.7;              // 復習の問題でうめる割合の上限
+  const DUE_SHARE = 0.25;             // 復習の問題でうめる割合の上限
   let opt = { mode: 'plan' };         // plan=復習の予定どおり／random=ランダム
   let CUR = null;          // 画面に出ているテスト {code, title, ids, redo}
   let gradeSel = null;     // 採点中の記録の番号
@@ -418,7 +434,7 @@ function makeHist(o){
   /* ── 操作画面 ── */
   function seg(items, cur, fn){
     return `<div class="seg">` + items.map(([v, t]) =>
-      `<button class="seg-btn${v === cur ? ' on' : ''}" onclick="HIST.${fn}(${JSON.stringify(v)})">${t}</button>`
+      `<button class="seg-btn${v === cur ? ' on' : ''}" onclick="HIST.${fn}('${esc(String(v))}')">${t}</button>`
     ).join('') + '</div>';
   }
   const KN = { new: 'まだ', due: '今日の復習', learn: '練習中', solid: '定着', pend: '採点待ち' };
@@ -441,7 +457,7 @@ function makeHist(o){
       + `<div class="hinfo">`
       + (opt.mode === 'plan'
           ? '✗・△ の問題は翌日、○ の問題は 3日→7日→14日→28日後 と間をのばして出します。'
-            + '今日の復習（最大7割）のあと、まだ出ていない問題で埋めます。'
+            + '今日の復習（最大25%）のあと、まだ出ていない問題で埋めます。'
           : '記録を使わず、範囲からランダムに出します（記録は残ります）。')
       + `</div>`;
     if(h.length){
@@ -817,7 +833,7 @@ function generate(fixed){
   // 番号参照（「434の人物」など）は、参照先の直後に続けて並べる
   list=orderAfterDep(list, inGroup);
 
-  SHEET=[];
+  SHEET=[]; QNO=0;
   list.forEach(q=>{
     if(inGroup.has(q)) return;
     const partner=groups.get(q.n);
@@ -872,6 +888,7 @@ function orderAfterDep(list, inGroup){
   return out;
 }
 
+let QNO=0;          // 用紙に刷る問番号（qEl を呼ぶ順＝刷る順に1から）
 function esc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
                   .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -880,19 +897,20 @@ function esc(s){
 function qEl(q,showAns){
   const labs=q.lab||q.a.map((_,i)=>CIRC[i]);
   // 答えが「名前・記号」のように分かれる問題は、欄を分けて名前をつける（q.parts）
-  const blank=(v,cls)=>`<span class="al${cls||''}${showAns?' show':''}" data-a="${esc(v)}">${showAns?v:''}</span>`;
+  const blank=(v,w)=>`<span class="al${showAns?' show':''}" style="width:${w}mm" data-a="${esc(v)}">${showAns?v:''}</span>`;
   const ans=q.a.map((v,i)=>{
-    if(!q.parts) return `<span class="ai">${labs[i]}${blank(v)}</span>`;
+    if(!q.parts) return `<span class="ai">${labs[i]}${blank(v,blankMM(v,40,24,76))}</span>`;
     const ps=v.split('・');
     return `<span class="ai multi">${labs[i]}`
-      + q.parts.map((nm,j)=>`<span class="pl">${nm}</span>${blank(ps[j]||'',nm==='記号'?' sym':' nm')}`).join('')
+      + q.parts.map((nm,j)=>`<span class="pp"><span class="pl">${nm}</span>${blank(ps[j]||'',blankMM(ps[j],30,nm==='記号'?14:24,q.parts.length>2?36:46))}</span>`).join('')
       + `</span>`;
   }).join('');
 
   let figR='', figB='', figT='';
   if(q.fig&&FIGS[q.fig]){
     const f=FIGS[q.fig];
-    const img=`<img src="${f.src}" style="max-height:${f.mh}mm">`;
+    // 本文の字を大きくしたので、図も1.25倍にする（段の幅をこえない範囲で）
+    const img=`<img src="${f.src}" style="max-height:${Math.round(f.mh*1.25)}mm">`;
     if(q.figpos==='right')   figR=`<span class="fig-r">${img}</span>`;
     else if(q.figtop)        figT=`<div class="fig">${img}</div>`;
     else                     figB=`<div class="fig">${img}</div>`;
@@ -902,11 +920,13 @@ function qEl(q,showAns){
 
   const num=q.n+(q.sub||'');
   const era=q.era?`<span class="era">［${q.era}］</span>`:'';
+  const head=`<div class="q-head"><span class="q-no">問${++QNO}</span>`
+            +`<span class="q-src">No.${num}</span>${era}<span class="mk"></span></div>`;
 
   const d=document.createElement('div');
   d.className='q';
-  d.innerHTML=figT
-            + `<div class="q-body">${figR}<span class="q-num">${num}</span>${era}${q.t}</div>`
+  d.innerHTML=head + figT
+            + `<div class="q-body">${figR}${q.t}</div>`
             + figB + tail + note
             + `<div class="ans">${ans}</div>`;
   return d;
@@ -1022,7 +1042,7 @@ setOrder(true);
 buildTags();
 const HIST=makeHist({subj:'shakai',name:'社会',prefix:'S',color:'#5a67d8',
   keyOf:q=>String(q.n)+(q.sub||''),
-  labelOf:q=>q.n+(q.sub||''),
+  labelOf:(q,i)=>'問'+(i+1),
   ansShown:()=>ansShown,
   sections:RANGES.flatMap(era=>era.subs.map(s=>({key:s.key,name:s.name,
     keys:Q.filter(q=>inRange(q,s.range)).map(q=>String(q.n)+(q.sub||''))}))),

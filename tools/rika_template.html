@@ -84,14 +84,18 @@ input[type=number]:focus{outline:none;border-color:#7fc7cd}
 
 .q{break-inside:avoid;page-break-inside:avoid;
    display:flow-root;width:100%;
-   padding:6px 0 8px;border-bottom:1px dotted #c8c8c8;margin-bottom:2px}
+   padding:3mm 0 3.5mm;border-bottom:1px dotted #c8c8c8;margin-bottom:0}
 
-.q-head{display:flex;align-items:center;gap:5px;margin-bottom:3px}
-.badge{font-size:8.4px;padding:1px 6px;border-radius:4px;white-space:nowrap}
-.q-num{font-weight:bold;font-size:9.6px}
-.q-body{font-size:9.4px;line-height:1.62;text-align:justify}
+.q-head{display:flex;align-items:center;gap:6px;margin-bottom:1.5mm}
+.badge{font-size:10.5px;padding:1px 6px;border-radius:4px;white-space:nowrap}
+.q-num{font-weight:bold;font-size:15px}
+.q-src{font-size:10.5px;color:#888}
+/* 採点の○×を書く枠 */
+.mk{margin-left:auto;width:7mm;height:7mm;border:1px solid #999;border-radius:1mm;flex:none}
+/* 本文は約10pt（以前は約7pt） */
+.q-body{font-size:13.5px;line-height:1.62;text-align:justify}
 
-.ctx{border:1px dotted #999;padding:4px 6px;margin:4px 0;line-height:1.6;font-size:8.8px;color:#333}
+.ctx{border:1px dotted #999;padding:4px 6px;margin:4px 0;line-height:1.6;font-size:12px;color:#333}
 
 /* 図まわり ── 文字と重ならないよう余白を確保 */
 .fig{margin:6px 0;text-align:center;clear:both}
@@ -100,12 +104,16 @@ input[type=number]:focus{outline:none;border-color:#7fc7cd}
 .fig-r img{max-width:100%;height:auto;display:block}
 
 /* 小問＋解答欄（旧版のようにラベルを二重に出さない） */
-.subs{margin-top:5px;clear:both}
-.sub{font-size:9px;line-height:1.75;margin-bottom:1px}
-.sub-l{display:inline-block;min-width:70px;border-bottom:1px solid #333;height:11px;
-       margin-left:5px;vertical-align:baseline;text-align:center;font-size:9px;line-height:11px}
-.one-l{display:block;border-bottom:1px solid #333;height:13px;margin-top:7px;clear:both;
-       text-align:center;font-size:9px;line-height:13px}
+.subs{margin-top:2mm;clear:both}
+.sub{font-size:12.5px;line-height:1.6;margin-bottom:1.5mm}
+/* 解答欄：手書きの字が入る高さ7mm。幅は答えの長さから決める（blankMM） */
+.sub-l{display:inline-block;max-width:100%;border-bottom:1px solid #333;height:7mm;
+       margin-left:5px;vertical-align:bottom;text-align:center;font-size:13px;line-height:7mm}
+.one-l{display:block;border-bottom:1px solid #333;height:8mm;margin-top:2mm;clear:both;
+       text-align:center;font-size:13px;line-height:8mm}
+/* 短い小問（図1〜図5、A〜Fなど）は2列に並べる。読む順は 左→右→次の行 */
+.subs.grid2{display:grid;grid-template-columns:1fr 1fr;column-gap:5mm}
+.subs.grid2 .sub{white-space:nowrap}
 .sub-l.show,.one-l.show{color:#c00}
 .noans{font-size:8px;color:#bbb;margin-left:4px}
 
@@ -368,7 +376,8 @@ function figHtml(key,q){
   const f=FIGS[key]; if(!f) return ['',''];
   const manyRefs = (q.sub||[]).length>=5;
   const block = f.wide || manyRefs;
-  const mh = block ? Math.max(f.mh,42) : f.mh;
+  // 本文の字を大きくしたので、図も1.3倍にする（段の幅をこえない範囲で）
+  const mh = Math.round((block ? Math.max(f.mh,42) : f.mh) * 1.3);
   const img=`<img src="${f.src}" style="max-height:${mh}mm">`;
   return block ? ['', `<div class="fig">${img}</div>`]
                : [`<span class="fig-r">${img}</span>`, ''];
@@ -396,10 +405,15 @@ function qEl(q,i){
   const perLine = a.length===((q.sub||[]).length||1);
   let subs='';
   if(q.sub && q.sub.length){
-    subs='<div class="subs">'
+    // 小問の文も答えも短いときだけ2列にする
+    const plain=x=>String(x||'').replace(/<[^>]*>/g,'');
+    const grid = q.sub.length>=3 && perLine
+              && q.sub.every(x=>plain(x).length<=6) && a.every(x=>plain(x).length<=8);
+    subs=`<div class="subs${grid?' grid2':''}">`
        + q.sub.map((s,i)=>{
            const v = perLine ? a[i] : (i===0 ? (a[0]||'') : '');
-           return `<div class="sub">${depText(q,s)}<span class="sub-l" data-a="${esc(v)}"></span></div>`;
+           const w = blankMM(v, 40, 22, grid?30:76);
+           return `<div class="sub">${depText(q,s)}<span class="sub-l" style="width:${w}mm" data-a="${esc(v)}"></span></div>`;
          }).join('')
        + '</div>';
   }else if(!q.fig_table){
@@ -411,7 +425,7 @@ function qEl(q,i){
   const d=document.createElement('div');
   d.className='q';
   d.innerHTML=`<div class="q-head">${badge}<span class="q-num">問${i+1}</span>`
-            + `<span style="font-size:8.4px;color:#999">No.${q.id}</span></div>`
+            + `<span class="q-src">No.${q.id}</span><span class="mk"></span></div>`
             + `<div class="q-body">${figR}${depText(q,q.q)}</div>`
             + ctx + figB + table + subs;
   return d;

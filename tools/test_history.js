@@ -12,7 +12,7 @@
        箱3以上（日を空けて2回以上つづけて正解）を「定着」とよぶ
        採点待ち …… 採点するまで出さない。ただし印刷から7日たっても採点がなければ無視する
    ・新しいテストは次の順で埋める（参照先といっしょに出す問題は、まとまりごと）
-       1. 復習日が来た問題（✗・△ が先、次に予定日の古い順）… 問題数の7割まで
+       1. 復習日が来た問題（✗・△ が先、次に予定日の古い順）… 問題数の25%まで
        2. まだ一度も出ていない問題（ランダム）
        3. 復習日が来た問題の残り
        4. まだ復習日の来ていない問題（予定日の近い順）・採点待ちの問題 … 画面に注意を出す
@@ -33,6 +33,16 @@
      pickSection(key) 節の行をタップしたとき、その節を出題範囲にする
      replay(list, title, code, redo)   この並びでテストを作り直す（redo=解き直し用紙）
 */
+/* 解答欄の幅（mm）を答えの文字数から決める。手書きで1字約5mm（英数字は約2.8mm）＋余裕8mm。
+   答えがわからない欄は dflt、範囲は lo〜hi にそろえる。 */
+function blankMM(a, dflt, lo, hi){
+  const t = String(a == null ? '' : a).replace(/<[^>]*>/g, '').replace(/（[^）]*）/g, '');
+  if(!t) return dflt || 40;
+  let w = 0;
+  for(const c of t) w += /[\x00-\x7f]/.test(c) ? 2.8 : 5;
+  return Math.round(Math.max(lo || 18, Math.min(hi || 78, w + 8)));
+}
+
 function makeHist(o){
   const TKEY = o.subj + '.tests', OKEY = o.subj + '.opt';
   const C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
@@ -40,7 +50,7 @@ function makeHist(o){
   const IV = [1, 3, 7, 14, 28, 56];   // 箱ごとの次の出題までの日数
   const SOLID = 3;                    // この箱から「定着」
   const PEND_DAYS = 7;                // 採点待ちを待つ日数
-  const DUE_SHARE = 0.7;              // 復習の問題でうめる割合の上限
+  const DUE_SHARE = 0.25;             // 復習の問題でうめる割合の上限
   let opt = { mode: 'plan' };         // plan=復習の予定どおり／random=ランダム
   let CUR = null;          // 画面に出ているテスト {code, title, ids, redo}
   let gradeSel = null;     // 採点中の記録の番号
@@ -216,7 +226,7 @@ function makeHist(o){
   /* ── 操作画面 ── */
   function seg(items, cur, fn){
     return `<div class="seg">` + items.map(([v, t]) =>
-      `<button class="seg-btn${v === cur ? ' on' : ''}" onclick="HIST.${fn}(${JSON.stringify(v)})">${t}</button>`
+      `<button class="seg-btn${v === cur ? ' on' : ''}" onclick="HIST.${fn}('${esc(String(v))}')">${t}</button>`
     ).join('') + '</div>';
   }
   const KN = { new: 'まだ', due: '今日の復習', learn: '練習中', solid: '定着', pend: '採点待ち' };
@@ -239,7 +249,7 @@ function makeHist(o){
       + `<div class="hinfo">`
       + (opt.mode === 'plan'
           ? '✗・△ の問題は翌日、○ の問題は 3日→7日→14日→28日後 と間をのばして出します。'
-            + '今日の復習（最大7割）のあと、まだ出ていない問題で埋めます。'
+            + '今日の復習（最大25%）のあと、まだ出ていない問題で埋めます。'
           : '記録を使わず、範囲からランダムに出します（記録は残ります）。')
       + `</div>`;
     if(h.length){
