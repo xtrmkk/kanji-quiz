@@ -19,7 +19,7 @@ public/shakai/index.html が実際に使うファイルで、単体で開ける�
   tools/data_hatten.py  第1〜4節  発展知識編              661-720
   tools/data_chiri.py   第1〜7節  地理編                  1-309
 """
-import base64, json, os, sys
+import base64, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -132,6 +132,53 @@ FIGS = {
 }
 
 
+# ── 答えが2〜3つに分かれる問題（「都道府県名を答えなさい。また…記号で答えなさい」など）──
+# 解答データは「神奈川県・ケ」のように「・」でつないである。解答欄が1本だと
+# 読み落として記号だけ書いてしまうので、q['parts'] に欄の名前を入れ、
+# JS側で「都道府県名＿＿ 記号＿＿」のように欄を分ける。本文の問いの部分には波線を引く。
+KANA1 = re.compile(r'^[ア-ン]$')
+ABBR  = re.compile(r'^[A-Z]{2,}$')
+NAME_WORDS = [            # 本文の言い方 → 欄の名前（長いものから順に調べる）
+    ('都道府県名', '都道府県名'), ('工業都市', '都市名'), ('都市名', '都市名'),
+    ('用水の名前', '用水名'), ('区の名前', '区名'), ('国の名前', '国名'), ('地名', '地名'),
+]
+WAVY = re.compile(r'(都道府県名|工業都市|都市名|用水の名前|区の名前|国の名前|首都の名前|地名|'
+                  r'正式名称|アルファベットの略称|記号で答えなさい|記号で答え)')
+
+
+def guess_parts(q):
+    a = q.get('a') or []
+    if not a or any('（順不同）' in x for x in a):
+        return None
+    sp = [x.split('・') for x in a]
+    n = len(sp[0])
+    if n < 2 or any(len(p) != n for p in sp):
+        return None
+    t = re.sub(r'<[^>]+>', '', q['t'])
+    last = [p[-1] for p in sp]
+    if n == 3 and '首都' in t and all(KANA1.match(x) for x in last):
+        return ['国名', '首都名', '記号']
+    if n == 2 and all(KANA1.match(x) for x in last):
+        name = next((v for k, v in NAME_WORDS if k in t), None)
+        if name is None and 61 <= q['n'] <= 94:   # 都市の問題の続き（説明だけで指示文がない）
+            name = '都市名'
+        return [name or '名前', '記号']
+    if n == 2 and all(ABBR.match(x) for x in last):
+        return ['正式名称', '略称']
+    return None
+
+
+def set_parts():
+    for q in Q:
+        p = guess_parts(q)
+        if not p:
+            continue
+        q['parts'] = p
+        # 指示文の問いの部分に波線（タグの中は書きかえない）
+        q['t'] = re.sub(r'(<[^>]+>)|' + WAVY.pattern,
+                        lambda m: m.group(1) or f'<span class="wv">{m.group(2)}</span>', q['t'])
+
+
 def b64(name):
     with open(os.path.join(FIG, f'{name}.jpg'), 'rb') as f:
         return 'data:image/jpeg;base64,' + base64.b64encode(f.read()).decode()
@@ -185,6 +232,7 @@ def check():
 
 
 def build():
+    set_parts()
     check()
     figdata = {k: {'src': b64(k), 'mh': v} for k, v in FIGS.items()}
 

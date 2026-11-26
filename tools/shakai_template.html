@@ -112,6 +112,13 @@ input[type=number]:focus{outline:none;border-color:#8b9ae0}
 .al{display:inline-block;min-width:86px;border-bottom:1px solid #333;height:13px;
     text-align:center;font-size:9px;line-height:13px}
 .al.show{color:#c00}
+/* 答えが分かれる問題：欄ごとに小さな名前をつける */
+.ai.multi{gap:2px}
+.pl{font-size:7.8px;color:#333;margin-left:5px;align-self:flex-end;line-height:13px}
+.al.nm{min-width:64px}
+.al.sym{min-width:24px}
+/* 問いの部分（都道府県名を／記号で答えなさい）に波線 */
+.wv{text-decoration:underline wavy #000;text-decoration-thickness:1px;text-underline-offset:2px}
 
 .sheet-btns{margin-top:16px;display:flex;gap:10px;flex-wrap:wrap}
 .pbtn,.bbtn,.abtn{padding:11px 24px;color:#fff;border:none;border-radius:10px;
@@ -370,10 +377,15 @@ function esc(s){
 
 function qEl(q,showAns){
   const labs=q.lab||q.a.map((_,i)=>CIRC[i]);
-  const ans=q.a.map((v,i)=>
-    `<span class="ai">${labs[i]}<span class="al${showAns?' show':''}" data-a="${esc(v)}">`
-    + `${showAns?v:''}</span></span>`
-  ).join('');
+  // 答えが「名前・記号」のように分かれる問題は、欄を分けて名前をつける（q.parts）
+  const blank=(v,cls)=>`<span class="al${cls||''}${showAns?' show':''}" data-a="${esc(v)}">${showAns?v:''}</span>`;
+  const ans=q.a.map((v,i)=>{
+    if(!q.parts) return `<span class="ai">${labs[i]}${blank(v)}</span>`;
+    const ps=v.split('・');
+    return `<span class="ai multi">${labs[i]}`
+      + q.parts.map((nm,j)=>`<span class="pl">${nm}</span>${blank(ps[j]||'',nm==='記号'?' sym':' nm')}`).join('')
+      + `</span>`;
+  }).join('');
 
   let figR='', figB='', figT='';
   if(q.fig&&FIGS[q.fig]){
