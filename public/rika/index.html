@@ -149,7 +149,7 @@ input[type=number]:focus{outline:none;border-color:#7fc7cd}
   <div class="card">
     <div class="row">
       <label>問題数</label>
-      <input type="number" id="cnt" value="40" min="1" max="720">
+      <input type="number" id="cnt" value="20" min="1" max="720">
     </div>
     <div class="frow" style="margin-top:13px">
       <span class="flabel">順番</span>
@@ -191,19 +191,26 @@ const FIGS={"candle_3": {"src": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQAB
 const SEC={"s1": ["第1節", "水の状態変化・あたたまり方", "#E1F5EE", "#0F6E56"], "s2": ["第2節", "酸素・二酸化炭素・燃え方", "#FAECE7", "#993C1D"], "s3": ["第3節", "溶解度・水溶液", "#E3F2FD", "#1565C0"], "s4": ["第4節", "天体", "#F3E5F5", "#7B1FA2"], "s5": ["第5節", "地層・岩石", "#E8F5E9", "#2E7D32"], "s6": ["第6節", "気象", "#FFF8E1", "#F57F17"], "s7": ["第7節", "力学", "#FBE9E7", "#BF360C"], "s8": ["第8節", "電磁気", "#E8EAF6", "#283593"], "s9": ["第9節", "光・音", "#E0F2F1", "#004D40"], "s10": ["第10節", "人体", "#FCE4EC", "#880E4F"], "s11": ["第11節", "動物", "#E8F5E9", "#1B5E20"], "s12": ["第12節", "植物", "#F9FBE7", "#558B2F"], "s13": ["第13節", "実験器具", "#FFFDE7", "#E65100"], "s14": ["第14節", "環境問題", "#E0F7FA", "#006064"], "s15": ["発展化学", "化学分野のプラス知識", "#EDE7F6", "#4527A0"], "s16": ["発展地学", "地学分野のプラス知識", "#FFF3E0", "#BF360C"], "s17": ["発展物理", "物理分野のプラス知識", "#E8EAF6", "#1A237E"], "s18": ["発展生物", "生物分野のプラス知識", "#F1F8E9", "#33691E"]};
 const GROUPS=[{"key": "chem", "label": "化学", "secs": ["s1", "s2", "s3", "s15"]}, {"key": "earth", "label": "地学", "secs": ["s4", "s5", "s6", "s16"]}, {"key": "phys", "label": "物理", "secs": ["s7", "s8", "s9", "s17"]}, {"key": "bio", "label": "生物", "secs": ["s10", "s11", "s12", "s18"]}, {"key": "misc", "label": "その他", "secs": ["s13", "s14"]}];
 const EVAP_TABLE="<table style=\"border-collapse:collapse;font-size:12px;margin:6px 0;width:100%\">\n<thead><tr>\n<th style=\"border:1px solid #bbb;padding:4px 8px;background:#f0f0f0;width:22%\"></th>\n<th style=\"border:1px solid #bbb;padding:4px 8px;background:#f0f0f0;width:39%\">蒸発</th>\n<th style=\"border:1px solid #bbb;padding:4px 8px;background:#f0f0f0;width:39%\">ふっとう</th>\n</tr></thead><tbody>\n<tr><td style=\"border:1px solid #bbb;padding:4px 8px;background:#f9f9f9;font-weight:500\">温度</td><td style=\"border:1px solid #bbb;height:32px\"></td><td style=\"border:1px solid #bbb;height:32px\"></td></tr>\n<tr><td style=\"border:1px solid #bbb;padding:4px 8px;background:#f9f9f9;font-weight:500\">場所</td><td style=\"border:1px solid #bbb;height:32px\"></td><td style=\"border:1px solid #bbb;height:32px\"></td></tr>\n</tbody></table>";
-/* ── 印刷の記録・採点・出題のかたより（社会・理科で共通）──────────────
+/* ── 印刷の記録・採点・復習の予定（社会・理科で共通）──────────────────
    build_shakai.py / build_rika.py がテンプレートの / *__HIST__* / に差しこむ。
 
    ・テストを作るたびに番号（例 S-7KQ2M）を決めて、用紙に番号と印刷日を刷る。
    ・印刷したときだけ「出した」とみなし、出した問題の並びをこの端末のブラウザに残す
-     （localStorage の <科目>.tests）。解答を表示したまま印刷したときは残さない。
-   ・操作画面で、印刷したテストを選んで「まちがえた問題」をタップして採点を保存する。
-   ・次にテストを作るとき
-       正解した問題 …… 直近 N 枚（既定10枚）のうちに正解していたら出さない
-       採点待ちの問題 … 直近 N 枚に出ていて、まだ採点していなければ出さない
-       まちがえた問題 … 最後に解いたときまちがえていたら、出やすくする
-                        （重み 3＋3×まちがえた回数、上限15。ふつうの問題は1）
-     出さない問題を除くと足りないときは、古いものから戻して数をそろえ、画面に注意を出す。
+     （localStorage の <科目>.tests）。解答を表示したままの印刷と、解き直し用紙は残さない。
+   ・操作画面で、印刷したテストを選んで1問ずつ ○ → ✗ → △ とタップして採点を保存する。
+       △ は「正解だけど自信がない・小問の一部がちがう」。予定の上では ✗ と同じあつかい。
+   ・問題ごとに「次に出す日」を決める（ライトナー方式。日付は印刷日＝解いた日で数える）
+       ✗・△ ……… 箱0にもどし、翌日に出す
+       ○ ………… 箱を1つ上げ、箱1→3日後、箱2→7日後、箱3→14日後、箱4→28日後、箱5→56日後
+       箱3以上（日を空けて2回以上つづけて正解）を「定着」とよぶ
+       採点待ち …… 採点するまで出さない。ただし印刷から7日たっても採点がなければ無視する
+   ・新しいテストは次の順で埋める（参照先といっしょに出す問題は、まとまりごと）
+       1. 復習日が来た問題（✗・△ が先、次に予定日の古い順）… 問題数の7割まで
+       2. まだ一度も出ていない問題（ランダム）
+       3. 復習日が来た問題の残り
+       4. まだ復習日の来ていない問題（予定日の近い順）・採点待ちの問題 … 画面に注意を出す
+     できたテストの並びはランダム（番号順の指定ならテンプレート側が並べ直す）。
+   ・採点した用紙から、✗・△ の問題だけの「解き直し用紙」を作れる。
    ・番号を選べば、その回とまったく同じ問題・同じ順番でもう一度出せる（この端末だけ）。
    ・別の端末へは「書き出す」「読みこむ」で記録ごと持っていける。
 
@@ -214,34 +221,50 @@ const EVAP_TABLE="<table style=\"border-collapse:collapse;font-size:12px;margin:
      color    操作画面の色
      keyOf(q)        問題の記録用キー（文字列）
      labelOf(q, i)   採点画面に出す番号（用紙に刷ってある番号と同じもの）
-     replay(list, title, code)   この並びでテストを作り直す
+     ansShown()      いま解答を表示しているか
+     sections        節の一覧 [{key, name, keys:[問題キー…]}]（節ごとの状況の表に使う）
+     pickSection(key) 節の行をタップしたとき、その節を出題範囲にする
+     replay(list, title, code, redo)   この並びでテストを作り直す（redo=解き直し用紙）
 */
 function makeHist(o){
   const TKEY = o.subj + '.tests', OKEY = o.subj + '.opt';
   const C32 = '0123456789ABCDEFGHJKMNPQRSTVWXYZ';
   const BYKEY = new Map(Q.map(q => [o.keyOf(q), q]));
-  let opt = { n: 10, wrong: true };
-  let CUR = null;          // 画面に出ているテスト {code, title, ids}
+  const IV = [1, 3, 7, 14, 28, 56];   // 箱ごとの次の出題までの日数
+  const SOLID = 3;                    // この箱から「定着」
+  const PEND_DAYS = 7;                // 採点待ちを待つ日数
+  const DUE_SHARE = 0.7;              // 復習の問題でうめる割合の上限
+  let opt = { mode: 'plan' };         // plan=復習の予定どおり／random=ランダム
+  let CUR = null;          // 画面に出ているテスト {code, title, ids, redo}
   let gradeSel = null;     // 採点中の記録の番号
-  let gradeWrong = new Set();
+  let gradeMark = new Map();   // 問題キー -> 'x' | 't'
 
   /* ── 保存 ── */
   function load(){
     try { const v = JSON.parse(localStorage.getItem(TKEY) || '[]'); return Array.isArray(v) ? v : []; }
     catch(e){ return []; }
   }
-  function save(h){ try { localStorage.setItem(TKEY, JSON.stringify(h.slice(0, 300))); } catch(e){} }
+  function save(h){ try { localStorage.setItem(TKEY, JSON.stringify(h.slice(0, 400))); } catch(e){} }
   function loadOpt(){
-    try { const v = JSON.parse(localStorage.getItem(OKEY) || 'null'); if(v) opt = Object.assign(opt, v); } catch(e){}
+    try {
+      const v = JSON.parse(localStorage.getItem(OKEY) || 'null');
+      if(v && (v.mode === 'plan' || v.mode === 'random')) opt.mode = v.mode;
+    } catch(e){}
   }
   function saveOpt(){ try { localStorage.setItem(OKEY, JSON.stringify(opt)); } catch(e){} }
 
   /* ── 日付・番号 ── */
   const WD = '日月火水木金土';
-  function today(){
-    const d = new Date();
-    const p = x => String(x).padStart(2, '0');
-    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+  const p2 = x => String(x).padStart(2, '0');
+  const ymd = d => d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate());
+  function today(){ return ymd(new Date()); }
+  function addDays(s, n){
+    const [y, m, d] = s.split('-').map(Number);
+    return ymd(new Date(y, m - 1, d + n));
+  }
+  function daysBetween(a, b){
+    const f = s => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d); };
+    return Math.round((f(b) - f(a)) / 86400000);
   }
   function jpDate(s){
     const [y, m, d] = s.split('-').map(Number);
@@ -265,80 +288,98 @@ function makeHist(o){
   }
 
   /* ── 問題ごとの状態 ──
-     新しい記録から順に見て、その問題がいちばん最近出た記録で決める。 */
+     古い記録から順に見て、箱と次に出す日を更新していく。
+     s = {box, due, seen（採点ずみで解いた回数）, last('o'|'x'|'t'), pend（採点待ち）} */
   function status(){
-    const h = load(), st = new Map();
-    h.forEach((r, i) => {
-      const ws = r.w ? new Set(r.w) : null;
+    const td = today(), st = new Map();
+    load().slice().reverse().forEach(r => {
+      if(!r.w && daysBetween(r.d, td) > PEND_DAYS) return;   // 採点されないまま古くなった用紙
+      const ws = new Set(r.w || []), ts = new Set(r.t || []);
       r.ids.forEach(k => {
-        let s = st.get(k);
-        if(!s){
-          s = { idx: i, last: ws ? (ws.has(k) ? 'x' : 'o') : 'p', wrongs: 0 };
-          st.set(k, s);
+        const s = st.get(k) || { box: 0, due: null, seen: 0, last: null, pend: false };
+        if(!r.w){ s.pend = true; st.set(k, s); return; }
+        s.pend = false; s.seen++;
+        if(ws.has(k) || ts.has(k)){
+          s.box = 0; s.last = ws.has(k) ? 'x' : 't';
+        }else{
+          s.box = Math.min(s.box + 1, IV.length - 1); s.last = 'o';
         }
-        if(ws && ws.has(k)) s.wrongs++;
+        s.due = addDays(r.d, IV[s.box]);
+        st.set(k, s);
       });
     });
     return st;
   }
-  function held(s){ return s && opt.n > 0 && s.idx < opt.n && (s.last === 'o' || s.last === 'p'); }
-  function weight(s){
-    if(!s || s.last !== 'x' || !opt.wrong) return 1;
-    return Math.min(15, 3 + 3 * s.wrongs);
+  /** 'new' まだ | 'pend' 採点待ち | 'due' 今日の復習 | 'learn' 練習中 | 'solid' 定着 */
+  function kind(s, td){
+    if(!s || (!s.seen && !s.pend)) return 'new';
+    if(s.pend) return 'pend';
+    if(s.due <= td) return 'due';
+    return s.box >= SOLID ? 'solid' : 'learn';
   }
 
-  /* ── 抽選 ── 重みつきで cnt 問を選ぶ（選んだ順がそのまま出題順のもとになる） */
-  let lastWarn = '';
-  /* unit(q) は「q を出すなら一緒に出す問題」（参照先＋q）。既定は q だけ。
+  /* ── 抽選 ──
+     unit(q) は「q を出すなら一緒に出す問題」（参照先＋q）。既定は q だけ。
      まとまりごとに選び、問題数をこえるまとまりは飛ばして次をさがす。 */
+  let lastWarn = '';
+  const shuffle = a => { for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   function pick(P, cnt, unit){
     unit = unit || (q => [q]);
-    const st = status();
-    const ok = [], hold = [];
-    P.forEach(q => {
-      const s = st.get(o.keyOf(q));
-      if(held(s)) hold.push({ q, s }); else ok.push({ q, w: weight(s) });
-    });
-    ok.forEach(x => { x.r = Math.pow(Math.random(), 1 / x.w); });
-    ok.sort((a, b) => b.r - a.r);
-    hold.sort((a, b) => b.s.idx - a.s.idx || Math.random() - .5);   // 古いものから
+    const st = status(), td = today();
     const list = [], seen = new Set();
-    const take = (arr, force) => {
+    const take = (arr, upto) => {
       let n = 0;
-      for(const x of arr){
-        if(list.length >= cnt) break;
-        const u = unit(x.q).filter(q => !seen.has(o.keyOf(q)));
-        if(!u.length || (!force && list.length + u.length > cnt)) continue;
-        u.forEach(q => { seen.add(o.keyOf(q)); list.push(q); });
+      for(const q of arr){
+        if(list.length >= upto) break;
+        const u = unit(q).filter(x => !seen.has(o.keyOf(x)));
+        if(!u.length || list.length + u.length > cnt) continue;
+        u.forEach(x => { seen.add(o.keyOf(x)); list.push(x); });
         n += u.length;
       }
       return n;
     };
-    take(ok, false);
     lastWarn = '';
-    if(list.length < cnt){
-      // 足りない分は、出さないはずの問題のうち古いものから戻す
-      const n = take(hold, false) + (list.length < cnt ? take(ok.concat(hold), true) : 0);
-      if(n) lastWarn = `この範囲で出せる問題が足りないため、直近${opt.n}枚に出た問題を${n}問まぜています。`;
-      for(let i = list.length - 1; i > 0; i--){
-        const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]];
-      }
+    if(opt.mode === 'random'){
+      take(shuffle(P.slice()), cnt);
+      return shuffle(list);
     }
-    return list;
+    const due = [], neu = [], later = [], pend = [];
+    P.forEach(q => {
+      const s = st.get(o.keyOf(q)), k = kind(s, td);
+      if(k === 'new') neu.push(q);
+      else if(k === 'pend') pend.push(q);
+      else if(k === 'due') due.push({ q, s, r: Math.random() });
+      else later.push({ q, s, r: Math.random() });
+    });
+    const bad = s => (s.last === 'o' ? 1 : 0);
+    due.sort((a, b) => bad(a.s) - bad(b.s) || a.s.due.localeCompare(b.s.due) || a.r - b.r);
+    later.sort((a, b) => a.s.due.localeCompare(b.s.due) || a.r - b.r);
+    const dueQ = due.map(x => x.q);
+    take(dueQ, Math.ceil(cnt * DUE_SHARE));
+    take(shuffle(neu), cnt);
+    take(dueQ, cnt);
+    const n = take(later.map(x => x.q), cnt) + take(shuffle(pend), cnt);
+    if(n) lastWarn = `この範囲で今日出すべき問題が足りないため、まだ復習日の来ていない問題を${n}問まぜています。`
+                   + '範囲をひろげると、新しい問題が入ります。';
+    return shuffle(list);
   }
 
   /* ── 用紙に番号と日付を刷る ── */
-  function begin(list, title, code){
-    CUR = { code: code || newCode(), title, ids: list.map(o.keyOf) };
+  function begin(list, title, code, redo){
+    CUR = { code: code || newCode(), title, ids: list.map(o.keyOf), redo: !!redo };
     stamp();
     const wb = document.getElementById('histWarn');
-    wb.textContent = code ? `番号 ${code} のテストを、前と同じ問題・同じ順番で出しています。` : lastWarn;
+    wb.textContent = redo ? `番号 ${code} の解き直し用紙です。印刷しても記録には入りません。`
+                          + '答えを見て確かめたら、解答を隠してもう一度、何も見ずに答えさせてください。'
+                   : code ? `番号 ${code} のテストを、前と同じ問題・同じ順番で出しています。` : lastWarn;
     wb.style.display = wb.textContent ? 'block' : 'none';
     lastWarn = '';
   }
+  function codeText(){ return CUR ? (CUR.redo ? '解き直し ' : '番号 ') + CUR.code : ''; }
   function stamp(){
     if(!CUR) return;
-    document.getElementById('shCode').textContent = '番号 ' + CUR.code;
+    document.getElementById('shCode').textContent = codeText();
     document.getElementById('shDate').textContent = '印刷日　' + jpDate(today());
   }
   /** 2枚目以降の見出し */
@@ -347,7 +388,7 @@ function makeHist(o){
     const a = document.createElement('span'); a.className = 'sh-pg';
     a.textContent = title + '（' + nth + '枚目）　名前＿＿＿＿＿＿＿＿　印刷日 ' + jpDate(today());
     const b = document.createElement('span'); b.className = 'sh-code';
-    b.textContent = CUR ? '番号 ' + CUR.code : '';
+    b.textContent = codeText();
     h.append(a, b);
     return h;
   }
@@ -355,9 +396,9 @@ function makeHist(o){
   /* ── 印刷したら記録する ── */
   function mark(){
     stamp();
-    if(!CUR || o.ansShown()) return;          // 解答つきの印刷（答え合わせ用）は記録しない
+    if(!CUR || CUR.redo || o.ansShown()) return;   // 解き直し・答え合わせ用の印刷は記録しない
     const h = load();
-    if(h.some(r => r.code === CUR.code)) return;  // 同じテストの刷り直し
+    if(h.some(r => r.code === CUR.code)) return;   // 同じテストの刷り直し
     h.unshift({ code: CUR.code, d: today(), title: CUR.title, ids: CUR.ids, w: null });
     save(h);
     draw();
@@ -366,40 +407,66 @@ function makeHist(o){
   window.addEventListener('beforeprint', mark);
 
   /* ── 操作画面 ── */
-  function seg(id, items, cur, fn){
-    return `<div class="seg" id="${id}">` + items.map(([v, t]) =>
+  function seg(items, cur, fn){
+    return `<div class="seg">` + items.map(([v, t]) =>
       `<button class="seg-btn${v === cur ? ' on' : ''}" onclick="HIST.${fn}(${JSON.stringify(v)})">${t}</button>`
     ).join('') + '</div>';
   }
+  const KN = { new: 'まだ', due: '今日の復習', learn: '練習中', solid: '定着', pend: '採点待ち' };
   function draw(){
     const host = document.getElementById('histCard');
     if(!host) return;
-    const h = load(), st = status();
-    let nHold = 0, nWrong = 0;
-    st.forEach(s => { if(held(s)) nHold++; if(s.last === 'x') nWrong++; });
-    const nGraded = h.filter(r => r.w).length;
+    const h = load(), st = status(), td = today();
+    const nPend = h.filter(r => !r.w && daysBetween(r.d, td) <= PEND_DAYS).length;
 
-    let html = `<div class="card"><div class="card-h">出題のかたより（印刷・採点の記録から）</div>`
-      + `<div class="frow"><span class="flabel hl">正解した問題</span>`
-      + seg('hN', [[10, '10枚は出さない'], [5, '5枚'], [20, '20枚'], [0, '気にしない']], opt.n, 'setN') + `</div>`
-      + `<div class="frow"><span class="flabel hl">まちがえた問題</span>`
-      + seg('hW', [[true, '出やすくする'], [false, 'ふつう']], opt.wrong, 'setWrong') + `</div>`
-      + `<div class="hinfo">`;
-    if(!h.length){
-      html += 'まだ記録はありません。印刷したテストがここに記録され、採点すると次の出題に反映されます。';
+    // ── 節ごとの状況 ──
+    const tot = { new: 0, due: 0, learn: 0, solid: 0, pend: 0 };
+    const rows = (o.sections || []).map(sec => {
+      const c = { new: 0, due: 0, learn: 0, solid: 0, pend: 0 };
+      sec.keys.forEach(k => { const t = kind(st.get(k), td); c[t]++; tot[t]++; });
+      return { sec, c, n: sec.keys.length };
+    });
+    let html = `<div class="card"><div class="card-h">復習の予定（印刷・採点の記録から）</div>`
+      + `<div class="frow"><span class="flabel hl">出し方</span>`
+      + seg([['plan', '復習の予定どおり'], ['random', 'ランダム']], opt.mode, 'setMode') + `</div>`
+      + `<div class="hinfo">`
+      + (opt.mode === 'plan'
+          ? '✗・△ の問題は翌日、○ の問題は 3日→7日→14日→28日後 と間をのばして出します。'
+            + '今日の復習（最大7割）のあと、まだ出ていない問題で埋めます。'
+          : '記録を使わず、範囲からランダムに出します（記録は残ります）。')
+      + `</div>`;
+    if(h.length){
+      html += `<div class="hsum">`
+        + `<span class="k due">今日の復習 <b>${tot.due}</b></span>`
+        + `<span class="k learn">練習中 <b>${tot.learn}</b></span>`
+        + `<span class="k solid">定着 <b>${tot.solid}</b></span>`
+        + `<span class="k new">まだ <b>${tot.new}</b></span>`
+        + (tot.pend ? `<span class="k pend">採点待ち <b>${tot.pend}</b></span>` : '')
+        + `</div>`;
+      if(nPend) html += `<div class="hwarn">採点待ちの用紙が ${nPend}枚あります。採点すると次の出題に反映されます。</div>`;
+      html += `<details class="secs"><summary>節ごとの状況を見る（タップするとその節を出題範囲にします）</summary>`
+        + `<div class="stab">`
+        + rows.map(({ sec, c, n }) => {
+            const seg = t => c[t] ? `<i class="b ${t}" style="width:${c[t] / n * 100}%"></i>` : '';
+            return `<button class="srow" onclick="HIST.pickSection('${sec.key}')">`
+              + `<span class="sn">${esc(sec.name)}</span>`
+              + `<span class="bar">${seg('solid')}${seg('learn')}${seg('due')}${seg('pend')}</span>`
+              + `<span class="sc">${c.due ? `<em>復習${c.due}</em>` : ''}定着${c.solid}/${n}</span></button>`;
+          }).join('')
+        + `</div><div class="legend"><i class="b solid"></i>定着 <i class="b learn"></i>練習中 `
+        + `<i class="b due"></i>今日の復習 <i class="b pend"></i>採点待ち <i class="b new"></i>まだ</div></details>`;
     }else{
-      html += `記録 ${h.length}枚（採点ずみ ${nGraded}・採点待ち ${h.length - nGraded}）`
-        + `<br>いま出さない問題 <b>${nHold}</b>問　／　まちがえたままの問題 <b class="xr">${nWrong}</b>問`;
+      html += `<div class="hinfo">まだ記録はありません。印刷したテストがここに記録され、採点すると次の出題に反映されます。</div>`;
     }
     html += `<div class="hlinks">`
       + (h.length ? `<button class="lnk" onclick="HIST.exportJson()">記録を書き出す</button>` : '')
       + `<button class="lnk" onclick="document.getElementById('histFile').click()">記録を読みこむ</button>`
       // 「記録を消す」は子どもが押さないよう画面に出さない（HIST.clearAll() は残してある）
       + `<input type="file" id="histFile" accept=".json,application/json" style="display:none" onchange="HIST.importJson(this)">`
-      + `</div></div></div>`;
+      + `</div></div>`;
 
-    // 採点・前と同じテスト
-    html += `<div class="card"><div class="card-h">採点する・前と同じテストを出す</div>`;
+    // ── 採点・解き直し・前と同じテスト ──
+    html += `<div class="card"><div class="card-h">採点する・解き直す・前と同じテストを出す</div>`;
     if(!h.length){
       html += `<div class="hinfo">印刷したテストがまだありません。</div></div>`;
       host.innerHTML = html;
@@ -410,7 +477,8 @@ function makeHist(o){
       + `<button class="hbtn" onclick="HIST.find()">さがす</button></div>`
       + `<div class="hlist">`
       + h.slice(0, 12).map(r => {
-          const tag = r.w ? `<span class="htag ok">${r.ids.length - r.w.length}/${r.ids.length}</span>`
+          const nb = (r.w ? r.w.length : 0) + (r.t ? r.t.length : 0);
+          const tag = r.w ? `<span class="htag ok">○${r.ids.length - nb}/${r.ids.length}</span>`
                           : `<span class="htag pend">採点待ち</span>`;
           return `<button class="hrow${r.code === gradeSel ? ' on' : ''}" onclick="HIST.choose('${r.code}')">`
             + `<span class="hc">${r.code}</span><span class="hd">${shortDate(r.d)}</span>`
@@ -421,18 +489,26 @@ function makeHist(o){
 
     const r = h.find(x => x.code === gradeSel);
     if(r){
+      let nx = 0, nt = 0;
+      gradeMark.forEach(v => { if(v === 'x') nx++; else nt++; });
       html += `<div class="gbox"><div class="gtitle">${r.code}　${jpDate(r.d)}　${esc(r.title)}</div>`
-        + `<div class="hinfo">まちがえた問題をタップして ✗ にしてください（ほかは ○ になります）。</div>`
+        + `<div class="hinfo">タップするたびに ○ → ✗ → △ と変わります。`
+        + `△ は「正解だけど自信がない・一部まちがい」で、✗ と同じく翌日もう一度出ます。</div>`
         + `<div class="ggrid">`
         + r.ids.map((k, i) => {
             const q = BYKEY.get(k);
             const lab = q ? o.labelOf(q, i) : k;
-            return `<button class="gq${gradeWrong.has(k) ? ' x' : ''}" onclick="HIST.flip('${esc(k)}')">${lab}</button>`;
+            const m = gradeMark.get(k) || '';
+            return `<button class="gq ${m}" onclick="HIST.flip('${esc(k)}')">${lab}</button>`;
           }).join('')
-        + `</div><div class="gsum">○ ${r.ids.length - gradeWrong.size}　✗ ${gradeWrong.size}　（${r.ids.length}問中）</div>`
+        + `</div><div class="gsum">○ ${r.ids.length - nx - nt}　✗ ${nx}　△ ${nt}　（${r.ids.length}問中）</div>`
         + `<div class="gbtns"><button class="hbtn main" onclick="HIST.saveGrade()">採点を保存する</button>`
-        + `<button class="hbtn" onclick="HIST.redo('${r.code}')">このテストをもう一度出す</button>`
+        + (r.w && (r.w.length || (r.t || []).length)
+            ? `<button class="hbtn" onclick="HIST.redoWrong('${r.code}')">✗・△ の解き直し用紙を作る</button>` : '')
+        + `<button class="hbtn" onclick="HIST.redo('${r.code}')">このテストをもう一度出す</button></div>`
+        + `<div class="gbtns">`
         + (r.w ? `<button class="lnk" onclick="HIST.unGrade()">採点を取り消す</button>` : '')
+        + (!r.w ? `<button class="lnk" onclick="HIST.drop()">この用紙は解かなかった（記録から外す）</button>` : '')
         + `</div></div>`;
     }
     html += `</div>`;
@@ -444,7 +520,9 @@ function makeHist(o){
     const r = load().find(x => x.code === code);
     if(!r) return;
     gradeSel = code;
-    gradeWrong = new Set(r.w || []);
+    gradeMark = new Map();
+    (r.w || []).forEach(k => gradeMark.set(k, 'x'));
+    (r.t || []).forEach(k => gradeMark.set(k, 't'));
     draw();
   }
   function find(){
@@ -459,32 +537,47 @@ function makeHist(o){
     gradeSel = null;
     choose(c);
   }
-  function flip(k){ if(gradeWrong.has(k)) gradeWrong.delete(k); else gradeWrong.add(k); draw(); }
+  function flip(k){
+    const m = gradeMark.get(k);
+    if(!m) gradeMark.set(k, 'x'); else if(m === 'x') gradeMark.set(k, 't'); else gradeMark.delete(k);
+    draw();
+  }
   function saveGrade(){
     const h = load(), r = h.find(x => x.code === gradeSel);
     if(!r) return;
-    r.w = r.ids.filter(k => gradeWrong.has(k));
+    r.w = r.ids.filter(k => gradeMark.get(k) === 'x');
+    r.t = r.ids.filter(k => gradeMark.get(k) === 't');
     r.gd = today();
     save(h);
-    gradeSel = null;
-    draw();
-    o.refresh && o.refresh();
+    draw();      // 解き直し用紙のボタンを出すため、選んだまま描き直す
   }
   function unGrade(){
     const h = load(), r = h.find(x => x.code === gradeSel);
     if(!r) return;
-    r.w = null; delete r.gd;
-    save(h); gradeWrong = new Set(); draw();
+    r.w = null; delete r.t; delete r.gd;
+    save(h); gradeMark = new Map(); draw();
+  }
+  function drop(){
+    const h = load(), i = h.findIndex(x => x.code === gradeSel);
+    if(i < 0 || h[i].w) return;
+    if(!confirm(`番号 ${h[i].code} の用紙を、解かなかったものとして記録から外します。よろしいですか？`)) return;
+    h.splice(i, 1); save(h); gradeSel = null; draw();
   }
   function redo(code){
     const r = load().find(x => x.code === code);
     if(!r) return;
     const list = r.ids.map(k => BYKEY.get(k)).filter(Boolean);
-    if(!list.length) return;
-    o.replay(list, r.title, r.code);
+    if(list.length) o.replay(list, r.title, r.code, false);
   }
-  function setN(n){ opt.n = n; saveOpt(); draw(); }
-  function setWrong(v){ opt.wrong = v; saveOpt(); draw(); }
+  function redoWrong(code){
+    const r = load().find(x => x.code === code);
+    if(!r || !r.w) return;
+    const bad = new Set([...(r.w || []), ...(r.t || [])]);
+    const list = r.ids.filter(k => bad.has(k)).map(k => BYKEY.get(k)).filter(Boolean);
+    if(list.length) o.replay(list, r.title.replace(/^(社会|理科)テスト/, '$1テスト 解き直し'), r.code, true);
+  }
+  function setMode(m){ opt.mode = m; saveOpt(); draw(); }
+  function pickSection(key){ o.pickSection && o.pickSection(key); draw(); }
   function clearAll(){
     if(!confirm(o.name + 'テストの印刷・採点の記録をすべて消します。もとに戻せません。よろしいですか？')) return;
     try { localStorage.removeItem(TKEY); } catch(e){}
@@ -511,7 +604,7 @@ function makeHist(o){
         if(!r || !r.code || !Array.isArray(r.ids)) return;
         const m = at.get(r.code);
         if(!m){ h.push(r); at.set(r.code, r); add++; }
-        else if(r.w && (!m.w || (r.gd || '') > (m.gd || ''))){ m.w = r.w; m.gd = r.gd; upd++; }
+        else if(r.w && (!m.w || (r.gd || '') > (m.gd || ''))){ m.w = r.w; m.t = r.t || []; m.gd = r.gd; upd++; }
       });
       h.sort((a, b) => (b.d || '').localeCompare(a.d || ''));
       save(h); draw();
@@ -522,10 +615,33 @@ function makeHist(o){
 
   /* ── 見た目 ── */
   const css = `
-.flabel.hl{min-width:96px}
+.flabel.hl{min-width:60px}
 .hinfo{font-size:12.5px;color:#718096;line-height:1.7;margin-top:10px}
-.hinfo b{color:#2d3748}.hinfo b.xr{color:#c53030}
-.hlinks{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
+.hinfo b{color:#2d3748}
+.hwarn{font-size:12.5px;color:#8a5a00;background:#fff8e6;border-radius:8px;padding:7px 10px;margin-top:10px}
+.hsum{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.hsum .k{font-size:12.5px;padding:4px 10px;border-radius:99px;background:#f1f3f6;color:#4a5568}
+.hsum .k b{font-size:14px;margin-left:2px}
+.hsum .k.due{background:#fde8e8;color:#c53030}
+.hsum .k.solid{background:#e6f6ec;color:#2f855a}
+.hsum .k.learn{background:#e8f0fe;color:#2b5fb4}
+.hsum .k.pend{background:#fff4e5;color:#b7791f}
+.secs{margin-top:12px}
+.secs summary{font-size:12.5px;color:${o.color};cursor:pointer}
+.stab{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+.srow{display:grid;grid-template-columns:minmax(0,12.5em) minmax(40px,1fr) auto;gap:8px;align-items:center;padding:5px 6px;
+  border:none;background:none;border-radius:6px;cursor:pointer;font-family:inherit;text-align:left}
+.srow:hover{background:#f5f7fa}
+.sn{font-size:12px;color:#2d3748;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:#e9ecf1}
+.sc{font-size:11.5px;color:#718096;white-space:nowrap}
+.sc em{font-style:normal;color:#c53030;margin-right:6px}
+i.b{display:inline-block;height:100%}
+i.b.solid{background:#48bb78}i.b.learn{background:#7aa7ee}i.b.due{background:#f56565}
+i.b.pend{background:#f6c26b}i.b.new{background:#e9ecf1}
+.legend{font-size:11px;color:#718096;margin-top:6px}
+.legend i.b{width:10px;height:10px;border-radius:2px;vertical-align:-1px;margin-left:6px}
+.hlinks{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px}
 .lnk{background:none;border:none;color:${o.color};cursor:pointer;font-size:12.5px;padding:0;
   text-decoration:underline;font-family:inherit}
 .hcode{flex:1;min-width:0;padding:9px 12px;border:1.5px solid #e2e8f0;border-radius:9px;font-size:15px;
@@ -550,6 +666,8 @@ function makeHist(o){
   font-family:inherit;cursor:pointer;color:#2d3748}
 .gq.x{background:#fde8e8;border-color:#e53e3e;color:#c53030;font-weight:700}
 .gq.x::before{content:'✗ '}
+.gq.t{background:#fff4e5;border-color:#dd8a1e;color:#b7791f;font-weight:700}
+.gq.t::before{content:'△ '}
 .gsum{font-size:13px;color:#4a5568;margin-top:10px}
 .gbtns{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
 #histWarn{display:none;max-width:192mm;margin:0 auto 10px;padding:9px 13px;border-radius:9px;
@@ -569,9 +687,9 @@ function makeHist(o){
   document.head.appendChild(stEl);
 
   loadOpt();
-  return { pick, begin, head2, print, draw, choose, find, flip, saveGrade, unGrade, redo,
-           setN, setWrong, clearAll, exportJson, importJson,
-           code: () => CUR && CUR.code };
+  return { pick, begin, head2, print, draw, choose, find, flip, saveGrade, unGrade, drop,
+           redo, redoWrong, setMode, pickSection, clearAll, exportJson, importJson,
+           status, code: () => CUR && CUR.code };
 }
 
 
@@ -672,7 +790,7 @@ function setOrder(orderMode){
 function generate(fixed){
   const P=fixed?fixed.list:pool();
   if(!P.length) return;
-  const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||40));
+  const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||20));
   const showAns=document.getElementById('withans').checked;
 
   let list=fixed?P.slice():HIST.pick(P,cnt,withDeps);
@@ -684,7 +802,7 @@ function generate(fixed){
 
   const title=fixed?fixed.title:titleOf();
   document.getElementById('shTitle').textContent=title;
-  HIST.begin(list,title,fixed&&fixed.code);
+  HIST.begin(list,title,fixed&&fixed.code,fixed&&fixed.redo);
   document.getElementById('ctrl').style.display='none';
   document.getElementById('sheet').style.display='block';
   setAns(showAns);            // 解答の反映とページ割りつけ
@@ -884,7 +1002,11 @@ const HIST=makeHist({subj:'rika',name:'理科',prefix:'R',color:'#18a2ae',
   keyOf:q=>String(q.id),
   labelOf:(q,i)=>'問'+(i+1),
   ansShown:()=>ansShown,
-  replay:(list,title,code)=>generate({list,title,code})});
+  sections:Object.keys(SEC).map(k=>({key:k,name:SEC[k][0]+' '+SEC[k][1],
+    keys:Q.filter(q=>q.s===k).map(q=>String(q.id))})),
+  pickSection:k=>{sel.clear();sel.add(k);render();},
+  // 解き直し用紙は、参照先の問題も入れる（それがないと解けない）
+  replay:(list,title,code,redo)=>generate({list:redo?[...new Set(list.flatMap(withDeps))]:list,title,code,redo})});
 HIST.draw();
 </script>
 </body>
