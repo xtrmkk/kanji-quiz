@@ -169,18 +169,21 @@ input[type=number]:focus{outline:none;border-color:#8b9ae0}
     </div>
   </div>
 
+  <div id="histCard"></div>
   <button class="btn" id="genBtn" onclick="generate()">テストを作成する</button>
   <div class="info">※ 図のある問題は原本の図・写真つきで出ます</div>
 </div>
 
 <div id="sheet">
   <div class="sh-head" id="shHead">
-    <span class="sh-title" id="shTitle">社会テスト</span>
+    <div class="sh-left"><span class="sh-title" id="shTitle">社会テスト</span><span class="sh-date" id="shDate"></span></div>
     <span class="sh-meta">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿　点＿＿＿</span>
+    <span class="sh-code" id="shCode"></span>
   </div>
+  <div id="histWarn"></div>
   <div id="qc"></div>
   <div class="sheet-btns">
-    <button class="pbtn" onclick="window.print()">印刷する</button>
+    <button class="pbtn" onclick="HIST.print()">印刷する</button>
     <button class="bbtn" onclick="back()">戻る</button>
     <button class="abtn" id="ansBtn" onclick="toggleAns()">解答を表示</button>
   </div>
@@ -188,6 +191,7 @@ input[type=number]:focus{outline:none;border-color:#8b9ae0}
 
 <script>
 /*__QDATA__*/
+/*__HIST__*/
 
 const CIRC='①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮⑯⑰⑱⑲⑳';
 const sel=new Set();     // 選択中の範囲キー
@@ -270,13 +274,14 @@ function titleOf(){
 }
 
 /* ── テスト生成 ── */
-function generate(){
-  const P=pool();
+/* fixed: 前と同じテストを出すとき {list, title, code}（抽選も並べ替えもしない） */
+function generate(fixed){
+  const P=fixed?fixed.list:pool();
   if(!P.length) return;
   const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||40));
   const showAns=document.getElementById('withans').checked;
 
-  let list=shuffle(P.slice()).slice(0,cnt);
+  let list=fixed?P.slice():HIST.pick(P,cnt);
   const nums=new Set(list.map(q=>q.n));
 
   // 他問を参照する問題：参照先が出題されていれば原文のまま、
@@ -291,7 +296,7 @@ function generate(){
   });
 
   // 番号順に並べる指定なら、抽選後に番号順へ並べ替える
-  if(!shuffleOn) list.sort((a,b)=> a.n-b.n || (a.sub||'').localeCompare(b.sub||''));
+  if(!fixed && !shuffleOn) list.sort((a,b)=> a.n-b.n || (a.sub||'').localeCompare(b.sub||''));
 
   // 「上の地図」など位置に依存する参照は、参照先と1つの塊にまとめて列またぎを防ぐ
   // groups: 参照先の番号 -> 依存side の問題
@@ -317,7 +322,12 @@ function generate(){
     }
   });
 
-  document.getElementById('shTitle').textContent=titleOf();
+  const title=fixed?fixed.title:titleOf();
+  document.getElementById('shTitle').textContent=title;
+  // 用紙に刷った順（参照ペアは上・下の順）で記録する
+  const shown=[];
+  list.forEach(q=>{ if(inGroup.has(q)) return; shown.push(q); const p=groups.get(q.n); if(p) shown.push(p); });
+  HIST.begin(shown,title,fixed&&fixed.code);
   ansShown=showAns;                      // 解答ボタンの表示を作成時の状態に合わせる
   syncAnsBtn();
   document.getElementById('ctrl').style.display='none';
@@ -478,7 +488,8 @@ function layoutPages(){
   }
   function addPage(){
     const page=document.createElement('div'); page.className='page';
-    if(!qc.children.length && head) page.appendChild(head);
+    if(!qc.children.length){ if(head) page.appendChild(head); }
+    else page.appendChild(HIST.head2(document.getElementById('shTitle').textContent, qc.children.length+1));
     cols=document.createElement('div'); cols.className='pcols';
     page.appendChild(cols); qc.appendChild(page);
     nCol=0; addCol();
@@ -495,6 +506,12 @@ function layoutPages(){
 
 setOrder(true);
 buildTags();
+const HIST=makeHist({subj:'shakai',name:'社会',prefix:'S',color:'#5a67d8',
+  keyOf:q=>String(q.n)+(q.sub||''),
+  labelOf:q=>q.n+(q.sub||''),
+  ansShown:()=>ansShown,
+  replay:(list,title,code)=>generate({list,title,code})});
+HIST.draw();
 </script>
 </body>
 </html>

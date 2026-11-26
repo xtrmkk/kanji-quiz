@@ -104,6 +104,9 @@ def build():
             'const GROUPS=' + json.dumps(GROUPS, ensure_ascii=False) + ';\n'
             'const EVAP_TABLE=' + json.dumps(evap, ensure_ascii=False) + ';')
     out = tpl.replace('/*__QDATA__*/', data)
+    hist = open(os.path.join(HERE, 'test_history.js'), encoding='utf-8').read()
+    assert '/*__HIST__*/' in out, 'テンプレートに記録部品のプレースホルダが見つからない'
+    out = out.replace('/*__HIST__*/', hist)
 
     dest = os.path.join(ROOT, 'public', 'rika', 'index.html')
     open(dest, 'w', encoding='utf-8').write(out)

@@ -195,6 +195,9 @@ def build():
             'const FIGS=' + json.dumps(figdata, ensure_ascii=False) + ';\n'
             'const RANGES=' + json.dumps(RANGES, ensure_ascii=False) + ';')
     out = tpl.replace('/*__QDATA__*/', data)
+    hist = open(os.path.join(HERE, 'test_history.js'), encoding='utf-8').read()
+    assert '/*__HIST__*/' in out, 'テンプレートに記録部品のプレースホルダが見つからない'
+    out = out.replace('/*__HIST__*/', hist)
 
     dest = os.path.join(ROOT, 'public', 'shakai', 'index.html')
     open(dest, 'w', encoding='utf-8').write(out)

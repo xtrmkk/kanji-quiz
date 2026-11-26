@@ -165,18 +165,21 @@ input[type=number]:focus{outline:none;border-color:#7fc7cd}
     </div>
   </div>
 
+  <div id="histCard"></div>
   <button class="btn" id="genBtn" onclick="generate()">テストを作成する</button>
   <div class="info">※ 図のある問題は図つきで出ます<br>※ 解答は化学分野（第1〜3節）のみ収録しています</div>
 </div>
 
 <div id="sheet">
   <div class="sh-head" id="shHead">
-    <span class="sh-title" id="shTitle">理科テスト</span>
+    <div class="sh-left"><span class="sh-title" id="shTitle">理科テスト</span><span class="sh-date" id="shDate"></span></div>
     <span class="sh-meta">組＿＿　番＿＿　名前＿＿＿＿＿＿＿＿　点＿＿＿</span>
+    <span class="sh-code" id="shCode"></span>
   </div>
+  <div id="histWarn"></div>
   <div id="qc"></div>
   <div class="sheet-btns">
-    <button class="pbtn" onclick="window.print()">印刷する</button>
+    <button class="pbtn" onclick="HIST.print()">印刷する</button>
     <button class="bbtn" onclick="back()">戻る</button>
     <button class="abtn" id="ansBtn" onclick="toggleAns()">解答を表示</button>
   </div>
@@ -184,6 +187,7 @@ input[type=number]:focus{outline:none;border-color:#7fc7cd}
 
 <script>
 /*__QDATA__*/
+/*__HIST__*/
 
 const sel=new Set();     // 選択中の範囲キー
 let shuffleOn=false;     // 出題順をシャッフルするか（デフォルトは番号順）
@@ -278,18 +282,21 @@ function setOrder(orderMode){
 }
 
 /* ── テスト生成 ── */
-function generate(){
-  const P=pool();
+/* fixed: 前と同じテストを出すとき {list, title, code}（抽選も並べ替えもしない） */
+function generate(fixed){
+  const P=fixed?fixed.list:pool();
   if(!P.length) return;
   const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||40));
   const showAns=document.getElementById('withans').checked;
 
-  let list=shuffle(P.slice()).slice(0,cnt);
-  if(!shuffleOn) list.sort((a,b)=>a.id-b.id);
+  let list=fixed?P.slice():HIST.pick(P,cnt);
+  if(!fixed && !shuffleOn) list.sort((a,b)=>a.id-b.id);
 
   SHEET=list.map((q,i)=>qEl(q,i));
 
-  document.getElementById('shTitle').textContent=titleOf();
+  const title=fixed?fixed.title:titleOf();
+  document.getElementById('shTitle').textContent=title;
+  HIST.begin(list,title,fixed&&fixed.code);
   document.getElementById('ctrl').style.display='none';
   document.getElementById('sheet').style.display='block';
   setAns(showAns);            // 解答の反映とページ割りつけ
@@ -435,7 +442,8 @@ function layoutPages(){
   }
   function addPage(){
     const page=document.createElement('div'); page.className='page';
-    if(!qc.children.length && head) page.appendChild(head);
+    if(!qc.children.length){ if(head) page.appendChild(head); }
+    else page.appendChild(HIST.head2(document.getElementById('shTitle').textContent, qc.children.length+1));
     cols=document.createElement('div'); cols.className='pcols';
     page.appendChild(cols); qc.appendChild(page);
     nCol=0; addCol();
@@ -452,6 +460,12 @@ function layoutPages(){
 
 setOrder(true);
 buildTags();
+const HIST=makeHist({subj:'rika',name:'理科',prefix:'R',color:'#18a2ae',
+  keyOf:q=>String(q.id),
+  labelOf:(q,i)=>'問'+(i+1),
+  ansShown:()=>ansShown,
+  replay:(list,title,code)=>generate({list,title,code})});
+HIST.draw();
 </script>
 </body>
 </html>
