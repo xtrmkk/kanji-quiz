@@ -289,9 +289,11 @@ function generate(fixed){
   const cnt=Math.min(P.length,Math.max(1,parseInt(document.getElementById('cnt').value)||40));
   const showAns=document.getElementById('withans').checked;
 
-  let list=fixed?P.slice():HIST.pick(P,cnt);
+  let list=fixed?P.slice():HIST.pick(P,cnt,withDeps);
   if(!fixed && !shuffleOn) list.sort((a,b)=>a.id-b.id);
+  list=groupDeps(list);
 
+  POS=new Map(list.map((q,i)=>[q.id,i+1]));
   SHEET=list.map((q,i)=>qEl(q,i));
 
   const title=fixed?fixed.title:titleOf();
@@ -301,6 +303,38 @@ function generate(fixed){
   document.getElementById('sheet').style.display='block';
   setAns(showAns);            // 解答の反映とページ割りつけ
   window.scrollTo(0,0);
+}
+
+/* ── 前の問題を使う問題（q.dep に参照先の id。build_rika.py が求める）──
+   参照先はかならず一緒に出し、参照先のすぐ後ろに並べる。 */
+const QBYID=new Map(Q.map(q=>[q.id,q]));
+let POS=new Map();       // id -> 用紙の問番号
+function withDeps(q){
+  return (q.dep||[]).map(d=>QBYID.get(d)).filter(Boolean).concat([q]);
+}
+/* 参照でつながる問題を1つのまとまりにし、まとまりの最初の問題の位置に
+   番号の小さい順（＝参照先が先）でまとめて置く。並べ直しても結果は変わらない。 */
+function groupDeps(list){
+  const ids=new Set(list.map(q=>q.id)), root=new Map();
+  const find=x=>{ while(root.has(x)&&root.get(x)!==x) x=root.get(x); return x; };
+  list.forEach(q=>root.set(q.id,q.id));
+  list.forEach(q=>(q.dep||[]).forEach(d=>{ if(ids.has(d)) root.set(find(q.id),find(d)); }));
+  const comp=new Map();
+  list.forEach(q=>{ const r=find(q.id); if(!comp.has(r)) comp.set(r,[]); comp.get(r).push(q); });
+  const out=[], done=new Set();
+  list.forEach(q=>{
+    const r=find(q.id); if(done.has(r)) return; done.add(r);
+    comp.get(r).sort((a,b)=>a.id-b.id).forEach(x=>out.push(x));
+  });
+  return out;
+}
+/* 本文の「181の」「654〜656の」「問87の」を、用紙の「問○」に書きかえる */
+function depText(q,t){
+  if(!q.dep||!t) return t;
+  return t.replace(/(^|[^\d図\/])問?(\d{2,3})(?=の|とは|〜)/g,(m,pre,n)=>{
+    const k=POS.get(+n);
+    return (k && q.dep.includes(+n)) ? pre+'問'+k : m;
+  });
 }
 
 function esc(s){
@@ -346,13 +380,13 @@ function qEl(q,i){
 
   let figR='', figB='';
   if(q.fig){ const [r,b]=figHtml(q.fig,q); figR+=r; figB+=b; }
-  if(q.ref_fig){
+  if(q.ref_fig && !(q.dep||[]).some(d=>POS.has(d))){
     const [r,b]=figHtml(q.ref_fig,q);
     const note='<div class="ctx" style="border-style:solid;border-color:#ddd">※参照図（関連問題より）</div>';
     if(b) figB+=note+b; else figR+=r;
   }
 
-  const ctx=q.ctx?`<div class="ctx">${q.ctx}</div>`:'';
+  const ctx=q.ctx?`<div class="ctx">${depText(q,q.ctx)}</div>`:'';
 
   // 小問は文と解答欄を1行にまとめる（旧版のラベル二重表示を解消）
   // 解答データがあれば sub-l / one-l に data-a として埋め込み、あとで表示/非表示を切り替える
@@ -365,7 +399,7 @@ function qEl(q,i){
     subs='<div class="subs">'
        + q.sub.map((s,i)=>{
            const v = perLine ? a[i] : (i===0 ? (a[0]||'') : '');
-           return `<div class="sub">${s}<span class="sub-l" data-a="${esc(v)}"></span></div>`;
+           return `<div class="sub">${depText(q,s)}<span class="sub-l" data-a="${esc(v)}"></span></div>`;
          }).join('')
        + '</div>';
   }else if(!q.fig_table){
@@ -378,7 +412,7 @@ function qEl(q,i){
   d.className='q';
   d.innerHTML=`<div class="q-head">${badge}<span class="q-num">問${i+1}</span>`
             + `<span style="font-size:8.4px;color:#999">No.${q.id}</span></div>`
-            + `<div class="q-body">${figR}${q.q}</div>`
+            + `<div class="q-body">${figR}${depText(q,q.q)}</div>`
             + ctx + figB + table + subs;
   return d;
 }

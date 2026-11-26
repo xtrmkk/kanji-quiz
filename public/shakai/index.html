@@ -291,7 +291,10 @@ function makeHist(o){
 
   /* ── 抽選 ── 重みつきで cnt 問を選ぶ（選んだ順がそのまま出題順のもとになる） */
   let lastWarn = '';
-  function pick(P, cnt){
+  /* unit(q) は「q を出すなら一緒に出す問題」（参照先＋q）。既定は q だけ。
+     まとまりごとに選び、問題数をこえるまとまりは飛ばして次をさがす。 */
+  function pick(P, cnt, unit){
+    unit = unit || (q => [q]);
     const st = status();
     const ok = [], hold = [];
     P.forEach(q => {
@@ -300,14 +303,25 @@ function makeHist(o){
     });
     ok.forEach(x => { x.r = Math.pow(Math.random(), 1 / x.w); });
     ok.sort((a, b) => b.r - a.r);
-    let list = ok.slice(0, cnt).map(x => x.q);
+    hold.sort((a, b) => b.s.idx - a.s.idx || Math.random() - .5);   // 古いものから
+    const list = [], seen = new Set();
+    const take = (arr, force) => {
+      let n = 0;
+      for(const x of arr){
+        if(list.length >= cnt) break;
+        const u = unit(x.q).filter(q => !seen.has(o.keyOf(q)));
+        if(!u.length || (!force && list.length + u.length > cnt)) continue;
+        u.forEach(q => { seen.add(o.keyOf(q)); list.push(q); });
+        n += u.length;
+      }
+      return n;
+    };
+    take(ok, false);
     lastWarn = '';
     if(list.length < cnt){
       // 足りない分は、出さないはずの問題のうち古いものから戻す
-      hold.sort((a, b) => b.s.idx - a.s.idx || Math.random() - .5);
-      const add = hold.slice(0, cnt - list.length).map(x => x.q);
-      lastWarn = `この範囲で出せる問題が足りないため、直近${opt.n}枚に出た問題を${add.length}問まぜています。`;
-      list = list.concat(add);
+      const n = take(hold, false) + (list.length < cnt ? take(ok.concat(hold), true) : 0);
+      if(n) lastWarn = `この範囲で出せる問題が足りないため、直近${opt.n}枚に出た問題を${n}問まぜています。`;
       for(let i = list.length - 1; i > 0; i--){
         const j = Math.floor(Math.random() * (i + 1)); [list[i], list[j]] = [list[j], list[i]];
       }

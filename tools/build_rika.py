@@ -15,7 +15,7 @@ tools/rika_template.html（骨組み）に問題データと tools/figs_rika/*.j
   tools/rika_narrow.json  小さく表示する図のキー
   tools/rika_evap.txt     蒸発とふっとうの比較表（問題中に埋め込む表）
 """
-import base64, json, os
+import base64, json, os, re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -69,6 +69,36 @@ def fig_meta(key):
     return {'src': src, 'mh': mh, 'wide': wide}
 
 
+# ── 前の問題を使う問題 ───────────────────────────────────────────────
+# 「181のCの図」「246の4つの気団」「654〜656のような」など、ほかの問題の番号を
+# 引いている問題は、引かれた問題（参照先）がいっしょに出ないと解けない。
+# そこで q['dep'] に参照先の id を入れておき、JS側で必ず参照先を一緒に出して
+# 直前に並べ、本文の番号を用紙の「問○」に書きかえる。
+DEP_RANGE = re.compile(r'(?<![\d図/])(\d{2,3})〜(\d{2,3})(?=の)')
+DEP_ONE   = re.compile(r'(?<![\d図/〜])問?(\d{2,3})(?=の|とは)')
+
+
+def find_deps(q, ids):
+    t = q['q'] + ''.join(q.get('sub', [])) + q.get('ctx', '')
+    out = []
+    for m in DEP_RANGE.finditer(t):
+        out += range(int(m.group(1)), int(m.group(2)) + 1)
+    out += [int(m.group(1)) for m in DEP_ONE.finditer(t)]
+    return sorted({d for d in out if d in ids and d != q['id'] and d < q['id']})
+
+
+def set_deps():
+    ids = {q['id'] for q in Q}
+    for q in Q:
+        d = find_deps(q, ids)
+        if d: q['dep'] = d
+    # 参照先がさらに別の問題を引いていると並べ方が複雑になるので、ないことを確かめる
+    by = {q['id']: q for q in Q}
+    for q in Q:
+        for d in q.get('dep', []):
+            assert not by[d].get('dep'), f'参照の参照: {q["id"]}→{d}→{by[d]["dep"]}'
+
+
 def check():
     ids = [q['id'] for q in Q]
     assert len(ids) == len(set(ids)), '問題IDが重複している'
@@ -90,6 +120,7 @@ def check():
 
 
 def build():
+    set_deps()
     used = check()
     figs = {k: fig_meta(k) for k in sorted(used)}
     evap = open(os.path.join(HERE, 'rika_evap.txt'), encoding='utf-8').read()
