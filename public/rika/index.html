@@ -6,6 +6,9 @@
 <title>理科テストジェネレーター</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+/* iPhoneのSafariが小さく見える字を勝手に大きくすると、ページ割りつけの計算とずれて
+   問題が途中で切れる。字の大きさを勝手に変えさせない。 */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:'Hiragino Mincho ProN','Yu Mincho','MS Mincho',serif;color:#111;
   background:
     radial-gradient(760px 420px at 12% -8%, #e4f4f6 0%, transparent 60%),
