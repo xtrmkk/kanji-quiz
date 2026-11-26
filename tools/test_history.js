@@ -201,7 +201,7 @@ function makeHist(o){
     html += `<div class="hlinks">`
       + (h.length ? `<button class="lnk" onclick="HIST.exportJson()">記録を書き出す</button>` : '')
       + `<button class="lnk" onclick="document.getElementById('histFile').click()">記録を読みこむ</button>`
-      + (h.length ? `<button class="lnk" onclick="HIST.clearAll()">記録を消す</button>` : '')
+      // 「記録を消す」は子どもが押さないよう画面に出さない（HIST.clearAll() は残してある）
       + `<input type="file" id="histFile" accept=".json,application/json" style="display:none" onchange="HIST.importJson(this)">`
       + `</div></div></div>`;
 
